@@ -72,13 +72,13 @@ export default {
     },
     {
       name: 'embedUrl',
-      title: 'Embed URL',
-      type: 'url',
-      description: 'YouTube, SoundCloud, or Bandcamp URL',
+      title: 'Embed Code',
+      type: 'text',
+      description: 'Paste embed code (iframe HTML) or a URL (YouTube, SoundCloud, Bandcamp)',
       hidden: ({ document }) => document?.mediaType !== 'embed',
-      validation: Rule => Rule.custom((url, context) => {
-        if (context.document?.mediaType === 'embed' && !url) {
-          return 'Embed URL is required when media type is embed'
+      validation: Rule => Rule.custom((embed, context) => {
+        if (context.document?.mediaType === 'embed' && !embed) {
+          return 'Embed code is required when media type is embed'
         }
         return true
       })

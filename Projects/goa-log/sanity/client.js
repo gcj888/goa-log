@@ -15,8 +15,17 @@ export const getEntries = async () => {
       date,
       title,
       tags,
+      blocks[] {
+        _type,
+        _key,
+        text,
+        url,
+        size,
+        "imageUrl": image.asset->url,
+        "audioUrl": audio.asset->url
+      },
+      // Legacy fields for backwards compatibility
       content,
-      mediaType,
       "imageUrl": image.asset->url,
       "audioUrl": audio.asset->url,
       embedUrl

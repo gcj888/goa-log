@@ -1,5 +1,8 @@
 <template>
-  <div class="log-feed">
+  <div class="log-feed" :class="{ 'has-highlight': highlightedId }" @mousemove="handleMouseMove" @touchstart="handleTouch">
+    <!-- Mist overlay -->
+    <div class="mist-overlay" :class="{ visible: showOverlay, fading: isFading }"></div>
+
     <header class="log-header">
       <div class="header-left">
         <h1>Prattling of Angles</h1>
@@ -24,6 +27,8 @@
         v-for="entry in filteredEntries"
         :key="entry._id"
         :entry="entry"
+        :isHighlighted="highlightedId === entry._id"
+        :isRevealing="isFading"
       />
     </div>
 
@@ -41,6 +46,14 @@ import { getEntries } from '../../sanity/client'
 const entries = ref([])
 const loading = ref(true)
 const error = ref(null)
+
+// Check hash immediately so overlay shows before content loads
+const initialHash = window.location.hash.slice(1)
+const highlightedId = ref(initialHash || null)
+const showOverlay = ref(!!initialHash)
+const isFading = ref(false)
+let mouseMoveDuration = 0
+let mouseMoveInterval = null
 
 // Filter state
 const filterText = ref('')
@@ -77,10 +90,62 @@ const handleFilter = ({ text, tags }) => {
   filterTags.value = tags
 }
 
+const dismissOverlay = () => {
+  if (isFading.value) return
+  isFading.value = true
+
+  setTimeout(() => {
+    showOverlay.value = false
+    highlightedId.value = null
+    isFading.value = false
+    mouseMoveDuration = 0
+  }, 1500)
+}
+
+const handleMouseMove = () => {
+  if (!highlightedId.value || isFading.value) return
+
+  // Start tracking mouse movement
+  if (!mouseMoveInterval) {
+    mouseMoveInterval = setInterval(() => {
+      mouseMoveDuration += 100
+      if (mouseMoveDuration >= 500) {
+        clearInterval(mouseMoveInterval)
+        mouseMoveInterval = null
+        dismissOverlay()
+      }
+    }, 100)
+  }
+}
+
+// Touch dismisses immediately
+const handleTouch = () => {
+  if (!highlightedId.value) return
+  dismissOverlay()
+}
+
 onMounted(async () => {
   try {
     const data = await getEntries()
     entries.value = data
+
+    // If we have a hash, verify the entry exists and scroll to it
+    if (highlightedId.value) {
+      const matchedEntry = entries.value.find(e => e._id === highlightedId.value)
+      if (matchedEntry) {
+        // Scroll to the highlighted entry instantly
+        setTimeout(() => {
+          const el = document.querySelector('.log-entry.highlighted')
+          if (el) {
+            el.scrollIntoView({ behavior: 'instant', block: 'center' })
+          }
+        }, 0)
+      } else {
+        // Hash doesn't match any entry, clear overlay
+        highlightedId.value = null
+        showOverlay.value = false
+      }
+    }
   } catch (err) {
     error.value = 'Failed to load entries'
     console.error(err)
@@ -95,6 +160,29 @@ onMounted(async () => {
   max-width: 1400px;
   margin: 0 auto;
   padding: calc(var(--spacing-unit) * 4);
+  position: relative;
+}
+
+.mist-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, hsl(22, 70%, 35%) 0%, hsl(25, 70%, 45%) 100%);
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 10s ease-out;
+}
+
+.mist-overlay.visible {
+  opacity: 1;
+}
+
+.mist-overlay.fading {
+  opacity: 0;
+  transition: opacity 15s ease-out;
 }
 
 .log-header {
