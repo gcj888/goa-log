@@ -5,7 +5,7 @@
 
     <header class="log-header">
       <div class="header-left">
-        <h1>Prattling of Angles</h1>
+        <h1>cabbages.info</h1>
         <a href="mailto:gclarkjones@gmail.com" class="contact-link">contact</a>
       </div>
       <img src="/pot.png" alt="" class="corner-image" />
