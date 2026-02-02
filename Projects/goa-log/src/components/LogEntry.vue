@@ -13,7 +13,7 @@
         <span class="date-link">{{ formattedDate }}</span>
         <span v-if="copied" class="copied-tooltip">Copied!</span>
       </div>
-      <div class="col-title" :class="{ 'is-release': isRelease }">
+      <div class="col-title" :class="{ 'is-release': isRelease && !isHighlighted }">
         {{ entry.title }}
       </div>
       <div class="col-tags">
