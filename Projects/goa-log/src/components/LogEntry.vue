@@ -431,6 +431,7 @@ const getEmbedHtml = (input) => {
   padding-left: calc(100px + var(--spacing-unit) * 4); /* Align with title column */
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: calc(var(--spacing-unit) * 2);
 }
 
@@ -530,6 +531,10 @@ const getEmbedHtml = (input) => {
 
   .col-tags {
     display: none;
+  }
+
+  .content-inner {
+    align-items: center;
   }
 
   .content-inner {
