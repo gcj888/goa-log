@@ -429,15 +429,16 @@ const getEmbedHtml = (input) => {
 .content-inner {
   padding: calc(var(--spacing-unit) * 3);
   padding-left: calc(100px + var(--spacing-unit) * 4); /* Align with title column */
+  padding-right: calc(240px + var(--spacing-unit) * 4); /* Match right side to tags column */
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: calc(var(--spacing-unit) * 2);
 }
 
 .entry-image {
   max-width: 100%;
   height: auto;
+  align-self: center;
 }
 
 .entry-image.size-small {
@@ -459,10 +460,12 @@ const getEmbedHtml = (input) => {
 .entry-audio {
   width: 100%;
   max-width: 500px;
+  align-self: center;
 }
 
 .entry-embed {
   padding: 16px 0;
+  align-self: center;
 }
 
 .entry-embed :deep(iframe) {
@@ -534,12 +537,9 @@ const getEmbedHtml = (input) => {
   }
 
   .content-inner {
-    align-items: center;
-  }
-
-  .content-inner {
     padding: calc(var(--spacing-unit) * 2);
     padding-left: calc(80px + var(--spacing-unit) * 3); /* Align with title on mobile */
+    padding-right: calc(24px + var(--spacing-unit) * 3); /* Match right side to expand column */
   }
 }
 </style>
