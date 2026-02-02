@@ -462,8 +462,6 @@ const getEmbedHtml = (input) => {
 
 .entry-embed {
   padding: 16px 0;
-  display: flex;
-  justify-content: center;
 }
 
 .entry-embed :deep(iframe) {
