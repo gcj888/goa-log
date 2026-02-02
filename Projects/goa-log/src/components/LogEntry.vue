@@ -13,7 +13,7 @@
         <span class="date-link">{{ formattedDate }}</span>
         <span v-if="copied" class="copied-tooltip">Copied!</span>
       </div>
-      <div class="col-title" :class="{ 'is-release': isRelease, 'hide-highlight': isHighlighted && !isRevealing, 'fade-in-highlight': isRevealing }">
+      <div class="col-title" :class="{ 'is-release': isRelease, 'hide-highlight': mistActive && !isRevealing, 'fade-in-highlight': isRevealing }">
         {{ entry.title }}
       </div>
       <div class="col-tags">
@@ -108,6 +108,10 @@ const props = defineProps({
     default: false
   },
   isRevealing: {
+    type: Boolean,
+    default: false
+  },
+  mistActive: {
     type: Boolean,
     default: false
   }

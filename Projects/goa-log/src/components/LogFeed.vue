@@ -29,6 +29,7 @@
         :entry="entry"
         :isHighlighted="highlightedId === entry._id"
         :isRevealing="isFading"
+        :mistActive="showOverlay"
       />
     </div>
 
