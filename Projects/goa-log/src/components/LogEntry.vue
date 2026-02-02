@@ -13,7 +13,7 @@
         <span class="date-link">{{ formattedDate }}</span>
         <span v-if="copied" class="copied-tooltip">Copied!</span>
       </div>
-      <div class="col-title" :class="{ 'is-release': isRelease && !isHighlighted }">
+      <div class="col-title" :class="{ 'is-release': isRelease, 'hide-highlight': isHighlighted && !isRevealing, 'fade-in-highlight': isRevealing }">
         {{ entry.title }}
       </div>
       <div class="col-tags">
@@ -374,6 +374,15 @@ const getEmbedHtml = (input) => {
   background: var(--highlight-bg);
   padding: 0 4px;
   margin: 0 -4px;
+}
+
+.col-title.is-release.hide-highlight {
+  background: transparent;
+}
+
+.col-title.is-release.fade-in-highlight {
+  background: var(--highlight-bg);
+  transition: background 30s ease-out;
 }
 
 .col-tags {
