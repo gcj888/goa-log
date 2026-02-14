@@ -27,7 +27,7 @@ const CORS_HEADERS = {
 export default async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('', { status: 204, headers: CORS_HEADERS })
+    return new Response(null, { status: 200, headers: CORS_HEADERS })
   }
 
   if (req.method !== 'POST') {
