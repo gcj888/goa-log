@@ -1,219 +1,116 @@
-# goa.log
+# cabbages.info
 
-A minimal, spreadsheet-inspired log for creative work. Post sketches, releases, notes, images, and embeds in a clean monospace interface.
+A minimal, monospace log for creative work. Post notes, releases, sketches, images, audio, and embeds (YouTube, SoundCloud, Bandcamp) in a clean spreadsheet-style interface.
 
-## Features
+Live at [cabbages.info](https://cabbages.info)
 
-- Spreadsheet-style grid layout
-- Collapsible entries with expandable content
-- Support for text, images, and embeds (YouTube, SoundCloud, Bandcamp)
-- Simple tagging system with conditional highlighting
+## How it works
+
+Content lives in **Sanity CMS**. The frontend fetches entries and displays them in a collapsible grid. Each entry can contain text (markdown), images, audio, and embeds arranged as blocks.
+
+### Key features
+
+- Spreadsheet-style grid with collapsible rows
+- Block-based content: mix text, images, audio, and embeds in any order
+- Embed support for YouTube, SoundCloud, and Bandcamp (with glow effect)
+- Tag system with search/filter (AND logic for multiple tags)
+- "Release" tag highlights entries with yellow background
+- Preview mode for reviewing the latest entry before sharing
+- Hash-based deep links to specific entries (with mist overlay reveal)
 - Mobile responsive
-- B612 Mono monospace font throughout
 
-## Tech Stack
+## Project structure
 
-- **Frontend**: Vue 3 + Vite
-- **CMS**: Sanity.io (headless CMS)
-- **Hosting**: Netlify (or any static host)
-- **Styling**: Vanilla CSS with CSS variables
+```
+Projects/goa-log/
+  src/
+    App.vue              # Hash router: #preview -> PreviewPage, else LogFeed
+    style.css            # Global styles, CSS variables, fonts
+    components/
+      LogFeed.vue        # Main feed — grid of all entries with search
+      LogEntry.vue       # Single entry row — expand/collapse, content rendering
+      SearchBar.vue      # Tag autocomplete + text search
+      PreviewPage.vue    # Latest entry preview (for email drafting)
+  sanity/
+    client.js            # Sanity API client (getEntries, getLatestEntry)
+  goa-log-cms/
+    schemaTypes/
+      logEntry.js        # Sanity schema — entry fields, block types
+```
 
-## Setup Instructions
-
-### 1. Frontend Setup (This Project)
+## Running locally
 
 ```bash
-# Install dependencies
+# Frontend
 npm install
+npm run dev          # http://localhost:5173
 
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
+# Sanity Studio (CMS)
+cd goa-log-cms
+npm install
+npx sanity dev       # http://localhost:3333
 ```
 
-### 2. Sanity CMS Setup
+## Preview mode
 
-#### Create a Sanity Project
+Navigate to `/#preview` to see the most recent entry rendered on its own page. This is useful for reviewing how a post will look before sharing or emailing it.
+
+## Adding content in Sanity
+
+1. Open Sanity Studio
+2. Create a new **Log Entry**
+3. Fill in date, title, and tags
+4. Add **blocks** in the content area:
+   - **Text Block** — markdown text (supports inline embed URLs on their own line)
+   - **Image Block** — upload an image, choose size (small/medium/large/full)
+   - **Audio Block** — upload an audio file
+   - **Embed Block** — paste a YouTube, SoundCloud, or Bandcamp URL
+5. Publish
+
+### Embed tips
+
+- **Embed Block**: Paste a plain URL. The frontend converts it to the appropriate iframe.
+- **Text Block**: You can also paste a YouTube/SoundCloud/Bandcamp URL on its own line in a text block and it will auto-embed.
+- Bandcamp album/track page URLs render as styled links. Bandcamp EmbeddedPlayer URLs render as iframes.
+
+## Deploying
+
+The site deploys to **Netlify** automatically when changes are pushed to the `main` branch.
 
 ```bash
-# Install Sanity CLI globally
-npm install -g @sanity/cli
-
-# Create a new Sanity project
-sanity init
-
-# Follow the prompts:
-# - Create new project
-# - Choose a project name (e.g., "goa-log-cms")
-# - Use the default dataset configuration
-# - Choose "Clean project with no predefined schemas"
+npm run build        # Build to dist/
 ```
 
-#### Add the Schema
-
-1. Navigate to your Sanity project folder
-2. Copy the schema from `sanity/logEntry.schema.js` in this project
-3. Add it to your `schemas/` folder in your Sanity project
-4. Import it in `schemas/index.js`:
-
-```javascript
-import logEntry from './logEntry'
-
-export const schemaTypes = [logEntry]
-```
-
-#### Start Sanity Studio
-
-```bash
-cd your-sanity-project
-sanity start
-```
-
-This will start the Sanity Studio at `http://localhost:3333`
-
-#### Deploy Sanity Studio
-
-```bash
-sanity deploy
-```
-
-This gives you a hosted studio at `your-project.sanity.studio`
-
-### 3. Connect Frontend to Sanity
-
-1. Get your Project ID from Sanity dashboard or by running `sanity manage`
-2. Update `sanity/client.js` with your project ID:
-
-```javascript
-projectId: 'YOUR_PROJECT_ID_HERE',
-```
-
-3. In `LogFeed.vue`, uncomment the Sanity query and comment out mock data:
-
-```javascript
-// Replace this:
-entries.value = mockEntries
-
-// With this:
-import { getEntries } from '../sanity/client'
-const data = await getEntries()
-entries.value = data
-```
-
-### 4. Deploy to Netlify
-
-#### Option A: Netlify CLI
-
-```bash
-# Install Netlify CLI
-npm install -g netlify-cli
-
-# Build your site
-npm run build
-
-# Deploy
-netlify deploy --prod
-```
-
-#### Option B: GitHub + Netlify
-
-1. Push this project to GitHub
-2. Go to [netlify.com](https://netlify.com)
-3. Click "Add new site" → "Import an existing project"
-4. Connect to your GitHub repo
-5. Build settings:
-   - Build command: `npm run build`
-   - Publish directory: `dist`
-6. Deploy!
-
-### 5. Adding Content
-
-1. Go to your Sanity Studio (hosted or local)
-2. Click "Log Entry" → "Create new"
-3. Fill in:
-   - **Date**: Auto-fills with today
-   - **Title**: Your entry text (shows when collapsed)
-   - **Tags**: Add tags like "release", "sketch", "idea"
-   - **Media Type**: Choose text/image/embed
-   - **Content**: Additional text (for expanded view)
-   - **Image**: Upload if media type is image
-   - **Embed URL**: Paste YouTube/SoundCloud/Bandcamp URL if embed
-4. Publish!
-
-The frontend will automatically fetch new entries.
-
-## Tag System
-
-Tags are simple text chips. Special behavior:
-- **"release" tag**: Highlights the title with yellow background
-- Other tags are just visual labels
-
-To add more conditional formatting, edit the `isRelease` computed property in `LogEntry.vue` and add CSS classes.
+Build command: `npm run build`
+Publish directory: `dist`
 
 ## Customization
 
-### Colors
-
-Edit CSS variables in `src/style.css`:
+### CSS variables (src/style.css)
 
 ```css
 :root {
   --bg: #ffffff;
   --text: #000000;
   --border: #000000;
-  --highlight-bg: #ffff00;  /* "release" tag highlight */
+  --highlight-bg: #FFEB3B;
+  --spacing-unit: 8px;
+  --font-mono: 'IBM Plex Mono', monospace;
 }
 ```
 
-### Font
+### Embed glow
 
-Change the Google Fonts import in `src/style.css`:
+Embeds get a random glow color from a curated palette (rust, gold, blue). This is generated per-entry via the `glowColor` computed property and applied as a CSS `box-shadow`.
 
-```css
-@import url('https://fonts.googleapis.com/css2?family=YOUR_FONT&display=swap');
+## Tech stack
 
-:root {
-  --font-mono: 'Your Font', monospace;
-}
-```
-
-### Layout
-
-Adjust grid columns in `LogFeed.vue` and `LogEntry.vue`:
-
-```css
-grid-template-columns: 120px 1fr 200px 40px;
-/* date, title, tags, expand button */
-```
-
-## Embed Support
-
-Currently supports:
-- **YouTube**: Paste any YouTube URL
-- **SoundCloud**: Paste track or playlist URL
-- **Bandcamp**: Paste album or track URL
-
-To add more services, edit the `getEmbedUrl()` function in `LogEntry.vue`.
-
-## Development Notes
-
-- Mock data is currently active in `LogFeed.vue` for testing
-- Uncomment Sanity queries once you've set up your project
-- The site is fully static - no server needed!
-- Images are hosted by Sanity's CDN
-
-## Roadmap / Future Ideas
-
-- [ ] Audio file hosting (.wav support)
-- [ ] Search/filter functionality
-- [ ] Tag filtering (click a tag to see all entries with that tag)
-- [ ] Markdown support in content field
-- [ ] Dark mode toggle
-- [ ] RSS feed generation
-- [ ] Analytics
+- **Frontend**: Vue 3 + Vite
+- **CMS**: Sanity.io
+- **Hosting**: Netlify
+- **Fonts**: IBM Plex Mono, IBM Plex Sans Condensed
+- **Markdown**: marked
 
 ## License
 
-MIT - do whatever you want with this!
+MIT

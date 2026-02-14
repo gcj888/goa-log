@@ -8,27 +8,35 @@ export const sanityClient = createClient({
 })
 
 // Query helper
+const entryFields = `
+  _id,
+  date,
+  title,
+  tags,
+  blocks[] {
+    _type,
+    _key,
+    text,
+    url,
+    size,
+    "imageUrl": image.asset->url,
+    "audioUrl": audio.asset->url
+  },
+  // Legacy fields for backwards compatibility
+  content,
+  "imageUrl": image.asset->url,
+  "audioUrl": audio.asset->url,
+  embedUrl
+`
+
 export const getEntries = async () => {
   return await sanityClient.fetch(
-    `*[_type == "logEntry"] | order(date desc, _createdAt desc) {
-      _id,
-      date,
-      title,
-      tags,
-      blocks[] {
-        _type,
-        _key,
-        text,
-        url,
-        size,
-        "imageUrl": image.asset->url,
-        "audioUrl": audio.asset->url
-      },
-      // Legacy fields for backwards compatibility
-      content,
-      "imageUrl": image.asset->url,
-      "audioUrl": audio.asset->url,
-      embedUrl
-    }`
+    `*[_type == "logEntry"] | order(date desc, _createdAt desc) {${entryFields}}`
+  )
+}
+
+export const getLatestEntry = async () => {
+  return await sanityClient.fetch(
+    `*[_type == "logEntry"] | order(date desc, _createdAt desc) [0] {${entryFields}}`
   )
 }

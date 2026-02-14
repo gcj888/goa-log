@@ -30,66 +30,60 @@
 
     <!-- Expanded content -->
     <div v-if="isExpanded" class="entry-content">
-      <div class="content-inner">
-        <!-- New block-based content -->
-        <template v-if="entry.blocks && entry.blocks.length">
-          <template v-for="block in entry.blocks" :key="block._key">
-            <!-- Text block -->
-            <div v-if="block._type === 'textBlock' && block.text" class="entry-text" v-html="parseMarkdown(block.text)"></div>
+      <!-- New block-based content -->
+      <template v-if="entry.blocks && entry.blocks.length">
+        <template v-for="block in entry.blocks" :key="block._key">
+          <!-- Text block -->
+          <div v-if="block._type === 'textBlock' && block.text" class="entry-text content-inner" :style="{ '--glow-color': glowColor }" v-html="parseMarkdown(block.text)"></div>
 
-            <!-- Embed block -->
-            <div
-              v-if="block._type === 'embedBlock' && block.url"
-              class="entry-embed"
-              :style="{ '--glow-color': glowColor }"
-              v-html="getEmbedHtml(block.url)"
-            ></div>
+          <!-- Embed block -->
+          <div
+            v-if="block._type === 'embedBlock' && block.url"
+            class="entry-embed"
+            :style="{ '--glow-color': glowColor }"
+            v-html="getEmbedHtml(block.url)"
+          ></div>
 
-            <!-- Image block -->
+          <!-- Image block -->
+          <div v-if="block._type === 'imageBlock' && block.imageUrl" class="entry-media">
             <img
-              v-if="block._type === 'imageBlock' && block.imageUrl"
               :src="block.imageUrl"
               alt=""
               class="entry-image"
               :class="`size-${block.size || 'full'}`"
             />
+          </div>
 
-            <!-- Audio block -->
+          <!-- Audio block -->
+          <div v-if="block._type === 'audioBlock' && block.audioUrl" class="entry-media">
             <audio
-              v-if="block._type === 'audioBlock' && block.audioUrl"
               :src="block.audioUrl"
               controls
               class="entry-audio"
             ></audio>
-          </template>
+          </div>
         </template>
+      </template>
 
-        <!-- Legacy fields fallback -->
-        <template v-else>
-          <img
-            v-if="entry.imageUrl"
-            :src="entry.imageUrl"
-            alt=""
-            class="entry-image"
-          />
+      <!-- Legacy fields fallback -->
+      <template v-else>
+        <div v-if="entry.imageUrl" class="entry-media">
+          <img :src="entry.imageUrl" alt="" class="entry-image" />
+        </div>
 
-          <audio
-            v-if="entry.audioUrl"
-            :src="entry.audioUrl"
-            controls
-            class="entry-audio"
-          ></audio>
+        <div v-if="entry.audioUrl" class="entry-media">
+          <audio :src="entry.audioUrl" controls class="entry-audio"></audio>
+        </div>
 
-          <div
-            v-if="entry.embedUrl"
-            class="entry-embed"
-            :style="{ '--glow-color': glowColor }"
-            v-html="getEmbedHtml(entry.embedUrl)"
-          ></div>
+        <div
+          v-if="entry.embedUrl"
+          class="entry-embed"
+          :style="{ '--glow-color': glowColor }"
+          v-html="getEmbedHtml(entry.embedUrl)"
+        ></div>
 
-          <div v-if="entry.content" class="entry-text" v-html="parsedLegacyContent"></div>
-        </template>
-      </div>
+        <div v-if="entry.content" class="entry-text content-inner" :style="{ '--glow-color': glowColor }" v-html="parsedLegacyContent"></div>
+      </template>
     </div>
   </div>
 </template>
@@ -97,6 +91,11 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { marked } from 'marked'
+
+// Fix links missing protocol — e.g. href="youtube.com" → href="https://youtube.com"
+const fixBareLinks = (html) => {
+  return html.replace(/href="(?!https?:\/\/|\/|#|mailto:)([^"]+)"/g, 'href="https://$1"')
+}
 
 const props = defineProps({
   entry: {
@@ -177,6 +176,36 @@ const toggleExpand = () => {
   isExpanded.value = !isExpanded.value
 }
 
+// Extract a clean URL from embed code (e.g. iframe HTML) or return as-is if already a URL
+const cleanEmbedInput = (input) => {
+  if (!input) return ''
+  const trimmed = input.trim()
+  // If it contains HTML, extract the src attribute
+  if (trimmed.includes('<')) {
+    const match = trimmed.match(/src=["']([^"']+)["']/)
+    return match ? match[1] : trimmed
+  }
+  return trimmed
+}
+
+// Format a Bandcamp URL into a readable label like "Artist — Album"
+const formatBandcampUrl = (url) => {
+  try {
+    const parsed = new URL(url)
+    const artist = parsed.hostname.replace('.bandcamp.com', '')
+    const pathParts = parsed.pathname.split('/').filter(Boolean)
+    const type = pathParts[0] // "album" or "track"
+    const slug = pathParts[1]
+    if (slug) {
+      const name = slug.replace(/-/g, ' ')
+      return `${artist} — ${name}`
+    }
+    return artist
+  } catch {
+    return url.replace(/https?:\/\//, '')
+  }
+}
+
 // Convert embed URLs on their own line to iframes
 const convertEmbedUrls = (content) => {
   if (!content) return ''
@@ -188,24 +217,38 @@ const convertEmbedUrls = (content) => {
     let embedUrl = url
     let height = '315'
 
-    // YouTube
+    // YouTube — responsive 16:9 wrapper
     if (url.includes('youtube.com/watch') || url.includes('youtu.be')) {
       const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]
       if (videoId) {
         embedUrl = `https://www.youtube.com/embed/${videoId}`
       }
+      return `<div class="inline-embed"><div class="youtube-wrapper"><iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe></div></div>`
     }
     // SoundCloud
     else if (url.includes('soundcloud.com')) {
       embedUrl = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=false`
       height = '166'
     }
-    // Bandcamp - link with play icon (embeds require track IDs we don't have)
+    // Bandcamp EmbeddedPlayer URL — render as iframe
+    else if (url.includes('bandcamp.com/EmbeddedPlayer')) {
+      return `<div class="inline-embed"><iframe src="${url}" style="border: 0; width: 350px; height: 470px;" frameborder="0" allowfullscreen></iframe></div>`
+    }
+    // Bandcamp album/track page URL — styled link
     else if (url.includes('bandcamp.com')) {
-      return `<div class="inline-embed bandcamp-link"><a href="${url}" target="_blank" rel="noopener">▶ ${url.replace(/https?:\/\//, '')}</a></div>`
+      const label = formatBandcampUrl(url)
+      return `<div class="inline-embed bandcamp-link"><a href="${url}" target="_blank" rel="noopener">▶ ${label}</a></div>`
     }
 
     return `<div class="inline-embed"><iframe src="${embedUrl}" width="100%" height="${height}" frameborder="0" allowfullscreen></iframe></div>`
+  })
+}
+
+// Wrap any bare iframes (not already inside .inline-embed) in a centered wrapper
+const wrapBareIframes = (html) => {
+  return html.replace(/(<div class="inline-embed">)?(<iframe\b[^>]*>[\s\S]*?<\/iframe>)/gi, (match, wrapper, iframe) => {
+    if (wrapper) return match // already wrapped
+    return `<div class="inline-embed">${iframe}</div>`
   })
 }
 
@@ -213,14 +256,16 @@ const convertEmbedUrls = (content) => {
 const parseMarkdown = (text) => {
   if (!text) return ''
   const withEmbeds = convertEmbedUrls(text)
-  return marked(withEmbeds, { breaks: true })
+  const html = marked(withEmbeds, { breaks: true })
+  return fixBareLinks(wrapBareIframes(html))
 }
 
 // Legacy: Parse markdown content with inline embeds
 const parsedLegacyContent = computed(() => {
   if (!props.entry.content) return ''
   const withEmbeds = convertEmbedUrls(props.entry.content)
-  return marked(withEmbeds, { breaks: true })
+  const html = marked(withEmbeds, { breaks: true })
+  return fixBareLinks(wrapBareIframes(html))
 })
 
 // Preload embed on hover
@@ -238,16 +283,8 @@ const preloadSrc = computed(() => {
   const embedBlock = props.entry.blocks?.find(b => b._type === 'embedBlock' && b.url)
   const embedInput = embedBlock?.url || props.entry.embedUrl
   if (!embedInput) return ''
-  const input = embedInput.trim()
+  let url = cleanEmbedInput(embedInput)
 
-  // If it's HTML, extract src from iframe
-  if (input.startsWith('<')) {
-    const match = input.match(/src=["']([^"']+)["']/)
-    return match ? match[1] : ''
-  }
-
-  // Convert URLs
-  let url = input
   if (url.includes('youtube.com/watch') || url.includes('youtu.be')) {
     const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]
     if (videoId) url = `https://www.youtube.com/embed/${videoId}`
@@ -258,34 +295,38 @@ const preloadSrc = computed(() => {
   return url
 })
 
-// Return embed HTML - if it's already an iframe, use it directly; otherwise generate one
+// Convert a URL to embed HTML
 const getEmbedHtml = (input) => {
   if (!input) return ''
 
-  const trimmed = input.trim()
-
-  // If it's already HTML (iframe, embed, object), use it directly
-  if (trimmed.startsWith('<')) {
-    return trimmed
-  }
-
-  // Otherwise it's a URL - generate an iframe
-  let url = trimmed
+  let url = cleanEmbedInput(input)
   let width = '100%'
   let height = '315'
 
-  // Convert YouTube watch URLs to embed format
-  if (url.includes('youtube.com/watch') || url.includes('youtu.be')) {
-    const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]
+  // YouTube — responsive 16:9 wrapper
+  if (url.includes('youtube.com/watch') || url.includes('youtu.be') || url.includes('youtube.com/embed')) {
+    const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/)?.[1]
     if (videoId) {
       url = `https://www.youtube.com/embed/${videoId}`
     }
+    return `<div class="youtube-wrapper"><iframe src="${url}" frameborder="0" allowfullscreen></iframe></div>`
   }
 
-  // Convert SoundCloud URLs to embed format
+  // SoundCloud
   if (url.includes('soundcloud.com') && !url.includes('w.soundcloud.com/player')) {
     url = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=false`
     height = '166'
+  }
+
+  // Bandcamp EmbeddedPlayer URL — render as iframe
+  if (url.includes('bandcamp.com/EmbeddedPlayer')) {
+    return `<iframe src="${url}" style="border: 0; width: 350px; height: 470px;" frameborder="0" allowfullscreen></iframe>`
+  }
+
+  // Bandcamp album/track page URL — show as styled link (can't embed without the player URL)
+  if (url.includes('bandcamp.com')) {
+    const label = formatBandcampUrl(url)
+    return `<div class="bandcamp-link"><a href="${url}" target="_blank" rel="noopener">▶ ${label}</a></div>`
   }
 
   return `<iframe src="${url}" width="${width}" height="${height}" frameborder="0" allowfullscreen></iframe>`
@@ -426,6 +467,10 @@ const getEmbedHtml = (input) => {
 
 .entry-content {
   animation: slideDown 0.2s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-unit) * 2);
+  padding: calc(var(--spacing-unit) * 3) 0;
 }
 
 @keyframes slideDown {
@@ -440,12 +485,8 @@ const getEmbedHtml = (input) => {
 }
 
 .content-inner {
-  padding: calc(var(--spacing-unit) * 3);
   padding-left: calc(100px + var(--spacing-unit) * 4); /* Align with title column */
   padding-right: calc(240px + var(--spacing-unit) * 4); /* Match right side to tags column */
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--spacing-unit) * 2);
 }
 
 .entry-image {
@@ -478,13 +519,45 @@ const getEmbedHtml = (input) => {
 
 .entry-embed {
   padding: 16px 0;
-  align-self: center;
+  display: flex;
+  justify-content: center;
+}
+
+.entry-media {
+  display: flex;
+  justify-content: center;
 }
 
 .entry-embed :deep(iframe) {
   border: none;
   max-width: 100%;
   box-shadow: 0 0 20px 4px var(--glow-color);
+}
+
+.entry-embed :deep(.youtube-wrapper) {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 16 / 9;
+}
+
+.entry-embed :deep(.youtube-wrapper iframe) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.entry-embed :deep(.bandcamp-link) {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  display: inline-block;
+}
+
+.entry-embed :deep(.bandcamp-link a) {
+  text-decoration: none;
+  font-size: 14px;
 }
 
 .entry-text {
@@ -520,11 +593,29 @@ const getEmbedHtml = (input) => {
 
 .entry-text :deep(.inline-embed) {
   margin: 1em 0;
+  display: flex;
+  justify-content: center;
 }
 
 .entry-text :deep(.inline-embed iframe) {
   border: none;
   max-width: 100%;
+  box-shadow: 0 0 20px 4px var(--glow-color);
+}
+
+.entry-text :deep(.youtube-wrapper) {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 16 / 9;
+}
+
+.entry-text :deep(.youtube-wrapper iframe) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .entry-text :deep(.bandcamp-link) {
@@ -550,7 +641,6 @@ const getEmbedHtml = (input) => {
   }
 
   .content-inner {
-    padding: calc(var(--spacing-unit) * 2);
     padding-left: calc(80px + var(--spacing-unit) * 3); /* Align with title on mobile */
     padding-right: calc(24px + var(--spacing-unit) * 3); /* Match right side to expand column */
   }

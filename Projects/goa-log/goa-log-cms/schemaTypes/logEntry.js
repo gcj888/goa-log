@@ -65,7 +65,7 @@ export default {
               name: 'url',
               title: 'URL or Embed Code',
               type: 'text',
-              description: 'YouTube, SoundCloud, Bandcamp URL or paste embed code'
+              description: 'Paste a URL or embed code (YouTube, SoundCloud, Bandcamp, etc.) — embed code will be auto-converted'
             }
           ],
           preview: {
