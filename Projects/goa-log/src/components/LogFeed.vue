@@ -7,7 +7,7 @@
       <div class="header-left">
         <h1>cabbages.info</h1>
         <div class="header-links">
-          <a href="mailto:gclarkjones@gmail.com" class="contact-link">contact</a>
+          <div class="contact-line">contact: <a href="mailto:graham@cabbages.info">graham@cabbages.info</a></div>
           <form class="subscribe-form" @submit.prevent="handleSubscribe">
             <input
               v-model="subscribeEmail"
@@ -19,8 +19,8 @@
             <button type="submit" class="subscribe-button" :disabled="subscribeState === 'sending'">
               {{ subscribeState === 'sending' ? '...' : subscribeState === 'done' ? 'ok!' : 'subscribe' }}
             </button>
+            <span v-if="subscribeMessage" class="subscribe-message">{{ subscribeMessage }}</span>
           </form>
-          <span v-if="subscribeMessage" class="subscribe-message">{{ subscribeMessage }}</span>
         </div>
       </div>
       <img src="/pot.png" alt="" class="corner-image" />
@@ -252,20 +252,19 @@ onMounted(async () => {
 }
 
 .log-header h1 {
-  font-family: 'IBM Plex Sans Condensed', sans-serif;
-  font-size: 24px;
+  font-family: 'ITC Zapf Chancery', 'Zapf Chancery', 'Apple Chancery', 'URW Chancery L', cursive;
+  font-size: 28px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .header-links {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.contact-link {
+.contact-line {
   font-size: 13px;
 }
 
@@ -318,7 +317,9 @@ onMounted(async () => {
   grid-template-columns: 100px 1fr 240px 32px;
   gap: calc(var(--spacing-unit) * 2);
   padding: calc(var(--spacing-unit) * 2);
-  font-weight: 700;
+  font-family: 'ITC Zapf Chancery', 'Zapf Chancery', 'Apple Chancery', 'URW Chancery L', cursive;
+  font-weight: 400;
+  font-size: 16px;
 }
 
 .col-date,

@@ -310,7 +310,7 @@ export default async (req) => {
       const batch = subscribers.slice(i, i + batchSize)
       const { error } = await resend.batch.send(
         batch.map(email => ({
-          from: 'cabbages.info <hello@cabbages.info>',
+          from: 'cabbages.info <graham@cabbages.info>',
           to: email,
           subject: entry.title,
           html,

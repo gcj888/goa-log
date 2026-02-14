@@ -78,7 +78,7 @@ export default async (req) => {
     // Send welcome email
     try {
       await resend.emails.send({
-        from: 'cabbages.info <hello@cabbages.info>',
+        from: 'cabbages.info <graham@cabbages.info>',
         to: normalizedEmail,
         subject: 'Welcome to cabbages.info',
         html: `<!DOCTYPE html>
