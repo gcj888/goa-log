@@ -419,6 +419,12 @@ const getEmbedHtml = (input) => {
   background: var(--highlight-bg);
   padding: 0 4px;
   margin: 0 -4px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.entry-row:hover .col-title.is-release {
+  background: var(--text);
+  color: var(--bg);
 }
 
 .col-title.is-release.hide-highlight {

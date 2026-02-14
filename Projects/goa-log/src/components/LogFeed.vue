@@ -23,7 +23,7 @@
           </form>
         </div>
       </div>
-      <img src="/pot.png" alt="" class="corner-image" />
+      <button class="releases-button" :class="{ active: showReleasesOnly }" @click="toggleReleases">releases</button>
     </header>
 
     <SearchBar :allTags="allTags" @filter="handleFilter" />
@@ -104,6 +104,12 @@ let mouseMoveInterval = null
 // Filter state
 const filterText = ref('')
 const filterTags = ref([])
+const showReleasesOnly = ref(false)
+
+function toggleReleases() {
+  showReleasesOnly.value = !showReleasesOnly.value
+  filterTags.value = showReleasesOnly.value ? ['release'] : []
+}
 
 // Get all unique tags from entries
 const allTags = computed(() => {
@@ -134,6 +140,7 @@ const filteredEntries = computed(() => {
 const handleFilter = ({ text, tags }) => {
   filterText.value = text
   filterTags.value = tags
+  showReleasesOnly.value = false
 }
 
 const dismissOverlay = () => {
@@ -234,15 +241,10 @@ onMounted(async () => {
 .log-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: calc(var(--spacing-unit) * 4);
   border-bottom: 1px solid var(--border);
   padding-bottom: calc(var(--spacing-unit) * 2);
-}
-
-.corner-image {
-  width: 120px;
-  height: 150px;
 }
 
 .header-left {
@@ -262,6 +264,28 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.releases-button {
+  font-family: 'ITC Zapf Chancery', 'Zapf Chancery', 'Apple Chancery', 'URW Chancery L', cursive;
+  font-size: 13px;
+  padding: 2px 8px;
+  background: var(--highlight-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  width: fit-content;
+}
+
+.releases-button:hover {
+  background: var(--text);
+  color: var(--bg);
+  opacity: 1;
+}
+
+.releases-button.active {
+  background: var(--text);
+  color: var(--bg);
 }
 
 .contact-line {
@@ -355,5 +379,6 @@ onMounted(async () => {
   .col-tags {
     display: none;
   }
+
 }
 </style>
