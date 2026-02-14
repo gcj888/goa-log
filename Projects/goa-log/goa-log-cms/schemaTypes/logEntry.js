@@ -30,6 +30,13 @@ export default {
       description: 'Add tags like: release, sketch, idea, music, etc.'
     },
     {
+      name: 'publishToEmail',
+      title: 'Publish to Email',
+      type: 'boolean',
+      description: 'Include this entry in the RSS feed for Buttondown email',
+      initialValue: false
+    },
+    {
       name: 'blocks',
       title: 'Content',
       type: 'array',

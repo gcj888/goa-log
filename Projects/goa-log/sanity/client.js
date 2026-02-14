@@ -13,6 +13,7 @@ const entryFields = `
   date,
   title,
   tags,
+  publishToEmail,
   blocks[] {
     _type,
     _key,
@@ -38,5 +39,11 @@ export const getEntries = async () => {
 export const getLatestEntry = async () => {
   return await sanityClient.fetch(
     `*[_type == "logEntry"] | order(date desc, _createdAt desc) [0] {${entryFields}}`
+  )
+}
+
+export const getEmailEntries = async () => {
+  return await sanityClient.fetch(
+    `*[_type == "logEntry" && publishToEmail == true] | order(date desc, _createdAt desc) [0...20] {${entryFields}}`
   )
 }

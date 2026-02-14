@@ -73,6 +73,35 @@ Navigate to `/#preview` to see the most recent entry rendered on its own page. T
 - **Text Block**: You can also paste a YouTube/SoundCloud/Bandcamp URL on its own line in a text block and it will auto-embed.
 - Bandcamp album/track page URLs render as styled links. Bandcamp EmbeddedPlayer URLs render as iframes.
 
+## Email newsletter
+
+The site generates an RSS feed at `/feed.xml` that Buttondown consumes to send email updates.
+
+### Publishing to email
+
+1. Create or edit a log entry in Sanity Studio
+2. Check the **Publish to Email** checkbox
+3. Save and publish
+4. Deploy the site (push to main triggers Netlify auto-deploy)
+5. Buttondown picks up the new entry from the RSS feed and sends the email
+
+### How it works
+
+- `scripts/generate-feed.js` runs after every build (via `postbuild` hook)
+- Fetches entries with `publishToEmail: true` from Sanity
+- Renders email-safe HTML for each entry (inline CSS, no iframes)
+- YouTube embeds become clickable thumbnails, SoundCloud/Bandcamp become styled links
+- Writes RSS 2.0 XML to `dist/feed.xml`
+
+### Email design
+
+Emails match the visual style of the preview page:
+- IBM Plex Mono font
+- Same header: date, title, tags
+- Centered embeds with glow effect
+- Release tag highlighting
+- "View on cabbages.info" footer link
+
 ## Deploying
 
 The site deploys to **Netlify** automatically when changes are pushed to the `main` branch.
