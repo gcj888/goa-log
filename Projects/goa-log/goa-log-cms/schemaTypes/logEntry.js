@@ -33,8 +33,15 @@ export default {
       name: 'publishToEmail',
       title: 'Publish to Email',
       type: 'boolean',
-      description: 'Include this entry in the RSS feed for Buttondown email',
+      description: 'Include this entry in the RSS feed. Use Send Email button to send directly.',
       initialValue: false
+    },
+    {
+      name: 'emailSentAt',
+      title: 'Email Sent At',
+      type: 'datetime',
+      readOnly: true,
+      description: 'Set automatically when email is sent'
     },
     {
       name: 'blocks',

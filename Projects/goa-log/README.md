@@ -75,32 +75,44 @@ Navigate to `/#preview` to see the most recent entry rendered on its own page. T
 
 ## Email newsletter
 
-The site generates an RSS feed at `/feed.xml` that Buttondown consumes to send email updates.
+Emails are sent directly from Sanity Studio using Resend, with subscriber signups collected on the site.
 
-### Publishing to email
+### Sending an email
 
 1. Create or edit a log entry in Sanity Studio
-2. Check the **Publish to Email** checkbox
-3. Save and publish
-4. Deploy the site (push to main triggers Netlify auto-deploy)
-5. Buttondown picks up the new entry from the RSS feed and sends the email
+2. Publish the entry
+3. Click the **Send Email** button (in the document actions menu)
+4. Confirm — email goes to all subscribers immediately
+
+### Subscriber sources
+
+- **Site signup form**: visitors enter their email in the header
+- **Sanity Studio**: subscriber documents can be added/managed directly
+- **Google Sheet** (optional): publish a sheet as CSV, set `GOOGLE_SHEET_CSV_URL` env var — emails are merged with Sanity subscribers
 
 ### How it works
 
-- `scripts/generate-feed.js` runs after every build (via `postbuild` hook)
-- Fetches entries with `publishToEmail: true` from Sanity
-- Renders email-safe HTML for each entry (inline CSS, no iframes)
-- YouTube embeds become clickable thumbnails, SoundCloud/Bandcamp become styled links
-- Writes RSS 2.0 XML to `dist/feed.xml`
+- `netlify/functions/subscribe.mjs` — handles signups, saves to Sanity, sends welcome email
+- `netlify/functions/send-email.mjs` — sends entry to all subscribers via Resend
+- `scripts/email-renderer.js` — shared email HTML renderer (inline CSS, email-safe)
+- `scripts/generate-feed.js` — RSS feed at `/feed.xml` (also uses shared renderer)
 
 ### Email design
 
 Emails match the visual style of the preview page:
 - IBM Plex Mono font
 - Same header: date, title, tags
-- Centered embeds with glow effect
+- Centered embeds with glow effect (YouTube thumbnails, SoundCloud/Bandcamp links)
 - Release tag highlighting
 - "View on cabbages.info" footer link
+
+### Environment variables (Netlify dashboard)
+
+- `RESEND_API_KEY` — from resend.com
+- `SANITY_WRITE_TOKEN` — from sanity.io/manage → API → Tokens
+- `SEND_EMAIL_SECRET` — random string, authorizes the send-email function
+- `GOOGLE_SHEET_CSV_URL` — (optional) published Google Sheet CSV for manual subscriber list
+- `SANITY_STUDIO_SEND_EMAIL_SECRET` — same as SEND_EMAIL_SECRET, for Sanity Studio env
 
 ## Deploying
 

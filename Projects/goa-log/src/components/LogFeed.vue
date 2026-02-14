@@ -6,7 +6,22 @@
     <header class="log-header">
       <div class="header-left">
         <h1>cabbages.info</h1>
-        <a href="mailto:gclarkjones@gmail.com" class="contact-link">contact</a>
+        <div class="header-links">
+          <a href="mailto:gclarkjones@gmail.com" class="contact-link">contact</a>
+          <form class="subscribe-form" @submit.prevent="handleSubscribe">
+            <input
+              v-model="subscribeEmail"
+              type="email"
+              placeholder="email"
+              class="subscribe-input"
+              :disabled="subscribeState === 'sending'"
+            />
+            <button type="submit" class="subscribe-button" :disabled="subscribeState === 'sending'">
+              {{ subscribeState === 'sending' ? '...' : subscribeState === 'done' ? 'ok!' : 'subscribe' }}
+            </button>
+          </form>
+          <span v-if="subscribeMessage" class="subscribe-message">{{ subscribeMessage }}</span>
+        </div>
       </div>
       <img src="/pot.png" alt="" class="corner-image" />
     </header>
@@ -47,6 +62,36 @@ import { getEntries } from '../../sanity/client'
 const entries = ref([])
 const loading = ref(true)
 const error = ref(null)
+
+// Subscribe form
+const subscribeEmail = ref('')
+const subscribeState = ref('idle') // idle, sending, done
+const subscribeMessage = ref('')
+
+async function handleSubscribe() {
+  if (!subscribeEmail.value) return
+  subscribeState.value = 'sending'
+  subscribeMessage.value = ''
+  try {
+    const res = await fetch('/.netlify/functions/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: subscribeEmail.value }),
+    })
+    const data = await res.json()
+    subscribeState.value = 'done'
+    subscribeMessage.value = data.message || 'Subscribed!'
+    subscribeEmail.value = ''
+    setTimeout(() => {
+      subscribeState.value = 'idle'
+      subscribeMessage.value = ''
+    }, 3000)
+  } catch {
+    subscribeState.value = 'idle'
+    subscribeMessage.value = 'error, try again'
+    setTimeout(() => { subscribeMessage.value = '' }, 3000)
+  }
+}
 
 // Check hash immediately so overlay shows before content loads
 const initialHash = window.location.hash.slice(1)
@@ -213,8 +258,55 @@ onMounted(async () => {
   letter-spacing: -0.02em;
 }
 
+.header-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .contact-link {
   font-size: 13px;
+}
+
+.subscribe-form {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.subscribe-input {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  width: 140px;
+  outline: none;
+}
+
+.subscribe-input:focus {
+  box-shadow: 0 0 0 1px var(--text);
+}
+
+.subscribe-button {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.subscribe-button:hover {
+  opacity: 0.7;
+}
+
+.subscribe-message {
+  font-size: 12px;
+  opacity: 0.6;
 }
 
 .log-grid {

@@ -1,3 +1,4 @@
 import logEntry from './logEntry'
+import subscriber from './subscriber'
 
-export const schemaTypes = [logEntry]
+export const schemaTypes = [logEntry, subscriber]
