@@ -254,7 +254,7 @@ onMounted(async () => {
 }
 
 .log-header h1 {
-  font-family: 'ITC Zapf Chancery', 'Zapf Chancery', 'Apple Chancery', 'URW Chancery L', cursive;
+  font-family: 'Pinyon Script', cursive;
   font-size: 28px;
   font-weight: 700;
   letter-spacing: 0;
@@ -267,7 +267,7 @@ onMounted(async () => {
 }
 
 .releases-button {
-  font-family: 'ITC Zapf Chancery', 'Zapf Chancery', 'Apple Chancery', 'URW Chancery L', cursive;
+  font-family: 'Pinyon Script', cursive;
   font-size: 13px;
   padding: 2px 8px;
   background: var(--highlight-bg);
@@ -341,7 +341,7 @@ onMounted(async () => {
   grid-template-columns: 100px 1fr 240px 32px;
   gap: calc(var(--spacing-unit) * 2);
   padding: calc(var(--spacing-unit) * 2);
-  font-family: 'ITC Zapf Chancery', 'Zapf Chancery', 'Apple Chancery', 'URW Chancery L', cursive;
+  font-family: 'Pinyon Script', cursive;
   font-weight: 400;
   font-size: 16px;
 }
