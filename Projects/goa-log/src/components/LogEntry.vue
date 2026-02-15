@@ -647,8 +647,9 @@ const getEmbedHtml = (input) => {
   }
 
   .content-inner {
-    padding-left: calc(80px + var(--spacing-unit) * 3); /* Align with title on mobile */
-    padding-right: calc(24px + var(--spacing-unit) * 3); /* Match right side to expand column */
+    padding-left: calc(var(--spacing-unit) * 2);
+    padding-right: calc(var(--spacing-unit) * 2);
+    text-align: left;
   }
 }
 </style>
