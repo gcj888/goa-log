@@ -254,8 +254,8 @@ onMounted(async () => {
 }
 
 .log-header h1 {
-  font-family: 'Pinyon Script', cursive;
-  font-size: 28px;
+  font-family: 'p22-morris-troy', sans-serif;
+  font-size: 30px;
   font-weight: 700;
   letter-spacing: 0;
 }
@@ -267,9 +267,9 @@ onMounted(async () => {
 }
 
 .releases-button {
-  font-family: 'Pinyon Script', cursive;
-  font-size: 13px;
-  padding: 2px 8px;
+  font-family: 'p22-morris-troy', sans-serif;
+  font-size: 16px;
+  padding: 3px 10px;
   background: var(--highlight-bg);
   border: 1px solid var(--border);
   color: var(--text);
@@ -341,7 +341,7 @@ onMounted(async () => {
   grid-template-columns: 100px 1fr 240px 32px;
   gap: calc(var(--spacing-unit) * 2);
   padding: calc(var(--spacing-unit) * 2);
-  font-family: 'Pinyon Script', cursive;
+  font-family: 'p22-morris-troy', sans-serif;
   font-weight: 400;
   font-size: 16px;
 }
