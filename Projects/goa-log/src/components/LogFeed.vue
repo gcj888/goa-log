@@ -7,7 +7,8 @@
       <div class="header-left">
         <h1>cabbages.info</h1>
         <div class="header-links">
-          <div class="contact-line">contact: <a href="mailto:graham@cabbages.info">graham@cabbages.info</a></div>
+          <div class="contact-line"><a href="mailto:graham@cabbages.info">graham@cabbages.info</a></div>
+          <div class="contact-line"><a href="https://instagram.com/pink__frosty" target="_blank" rel="noopener">@pink__frosty</a><span class="separator">✦</span><a href="https://gatheringofangels.bandcamp.com/" target="_blank" rel="noopener">bandcamp</a></div>
           <form class="subscribe-form" @submit.prevent="handleSubscribe">
             <input
               v-model="subscribeEmail"
@@ -23,7 +24,9 @@
           </form>
         </div>
       </div>
-      <button class="releases-button" :class="{ active: showReleasesOnly }" @click="toggleReleases">releases</button>
+      <div class="header-right">
+        <button class="releases-button" :class="{ active: showReleasesOnly }" @click="toggleReleases">releases</button>
+      </div>
     </header>
 
     <SearchBar :allTags="allTags" @filter="handleFilter" />
@@ -250,7 +253,7 @@ onMounted(async () => {
 .header-left {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--spacing-unit) * 1.5);
+  gap: 16px;
 }
 
 .log-header h1 {
@@ -263,18 +266,27 @@ onMounted(async () => {
 .header-links {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
+}
+
+.subscribe-form {
+  margin-top: 21px;
+}
+
+.header-right {
+  align-self: flex-end;
 }
 
 .releases-button {
-  font-family: 'p22-morris-troy', sans-serif;
-  font-size: 16px;
-  padding: 3px 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 2px 6px;
   background: var(--highlight-bg);
   border: 1px solid var(--border);
   color: var(--text);
   cursor: pointer;
   width: fit-content;
+  white-space: nowrap;
 }
 
 .releases-button:hover {
@@ -288,8 +300,15 @@ onMounted(async () => {
   color: var(--bg);
 }
 
+.separator {
+  font-size: 12px;
+  user-select: none;
+  margin: 0 3px;
+}
+
 .contact-line {
   font-size: 13px;
+  letter-spacing: -0.3px;
 }
 
 .subscribe-form {
