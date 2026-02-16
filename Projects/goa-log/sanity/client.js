@@ -33,7 +33,7 @@ const entryFields = `
 
 export const getEntries = async () => {
   return await sanityClient.fetch(
-    `*[_type == "logEntry"] | order(pinned desc, date desc, _createdAt desc) {${entryFields}}`
+    `*[_type == "logEntry"] | order(coalesce(pinned, false) desc, date desc, _createdAt desc) {${entryFields}}`
   )
 }
 

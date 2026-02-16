@@ -121,7 +121,7 @@ const copied = ref(false)
 const preloadEmbed = ref(false)
 
 const formattedDate = computed(() => {
-  if (props.entry.pinned) return 'pinned'
+  if (props.entry.pinned) return 'PINNED'
   const date = new Date(props.entry.date)
   const month = date.getMonth() + 1
   const day = date.getDate()
