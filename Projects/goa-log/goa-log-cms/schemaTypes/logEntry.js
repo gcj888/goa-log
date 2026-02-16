@@ -6,11 +6,22 @@ export default {
   type: 'document',
   fields: [
     {
+      name: 'pinned',
+      title: 'Pinned',
+      type: 'boolean',
+      description: 'Pin this entry to the top of the feed (no date shown)',
+      initialValue: false
+    },
+    {
       name: 'date',
       title: 'Date',
       type: 'date',
-      validation: Rule => Rule.required(),
-      initialValue: () => new Date().toISOString().split('T')[0]
+      validation: Rule => Rule.custom((date, context) => {
+        if (context.document?.pinned) return true
+        return date ? true : 'Date is required for non-pinned entries'
+      }),
+      initialValue: () => new Date().toISOString().split('T')[0],
+      hidden: ({ document }) => document?.pinned
     },
     {
       name: 'title',
@@ -180,14 +191,15 @@ export default {
     select: {
       title: 'title',
       date: 'date',
+      pinned: 'pinned',
       blocks: 'blocks'
     },
     prepare(selection) {
-      const { title, date, blocks } = selection
+      const { title, date, pinned, blocks } = selection
       const imageBlock = blocks?.find(b => b._type === 'imageBlock')
       return {
         title: title,
-        subtitle: date,
+        subtitle: pinned ? '📌 Pinned' : date,
         media: imageBlock?.image
       }
     }

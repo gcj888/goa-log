@@ -29,10 +29,11 @@ function htmlPage(title, message) {
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${title} — cabbages.info</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://use.typekit.net/jhl8fua.css">
 <style>
   body { margin: 0; padding: 32px 16px; background: #fff; color: #000; font-family: 'IBM Plex Mono', 'Courier New', monospace; font-size: 14px; line-height: 1.6; }
   .container { max-width: 480px; margin: 0 auto; }
-  h1 { font-size: 18px; font-weight: 400; margin-bottom: 16px; }
+  h1 { font-family: 'p22-morris-troy', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   a { color: #000; }
 </style>
 </head>
@@ -79,7 +80,7 @@ export default async (req) => {
 
     // Always show success (even if not found) to avoid email enumeration
     return new Response(
-      htmlPage('Unsubscribed', "You've been unsubscribed from cabbages.info. You won't receive any more emails."),
+      htmlPage('unsubscribed', "You've been unsubscribed from cabbages.info. You won't receive any more emails."),
       { status: 200, headers: { 'Content-Type': 'text/html' } }
     )
   } catch (err) {
