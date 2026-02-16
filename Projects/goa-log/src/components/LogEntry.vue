@@ -1,5 +1,5 @@
 <template>
-  <div class="log-entry" :class="{ expanded: isExpanded, highlighted: isHighlighted, reveal: isRevealing }">
+  <div class="log-entry" :class="{ expanded: isExpanded, highlighted: isHighlighted }">
     <!-- Hidden preload iframe -->
     <iframe
       v-if="preloadEmbed && !isExpanded"
@@ -13,7 +13,7 @@
         <span class="date-link">{{ formattedDate }}</span>
         <span v-if="copied" class="copied-tooltip">Copied!</span>
       </div>
-      <div class="col-title" :class="{ 'is-release': isRelease, 'hide-highlight': mistActive && !isRevealing, 'fade-in-highlight': isRevealing }">
+      <div class="col-title" :class="{ 'is-release': isRelease }">
         {{ entry.title }}
       </div>
       <div class="col-tags">
@@ -106,14 +106,6 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  isRevealing: {
-    type: Boolean,
-    default: false
-  },
-  mistActive: {
-    type: Boolean,
-    default: false
-  }
 })
 
 const isExpanded = ref(false)
@@ -347,23 +339,6 @@ const getEmbedHtml = (input) => {
   pointer-events: none;
 }
 
-.log-entry.highlighted {
-  z-index: 10;
-}
-
-.log-entry.highlighted .col-date,
-.log-entry.highlighted .col-tags,
-.log-entry.highlighted .col-expand {
-  opacity: 0;
-  transition: opacity 30s ease-out;
-}
-
-.log-entry.highlighted.reveal .col-date,
-.log-entry.highlighted.reveal .col-tags,
-.log-entry.highlighted.reveal .col-expand {
-  opacity: 1;
-}
-
 .entry-row {
   display: grid;
   grid-template-columns: 100px 1fr 240px 32px;
@@ -426,15 +401,6 @@ const getEmbedHtml = (input) => {
 .entry-row:hover .col-title.is-release {
   background: var(--text);
   color: var(--bg);
-}
-
-.col-title.is-release.hide-highlight {
-  background: transparent;
-}
-
-.col-title.is-release.fade-in-highlight {
-  background: var(--highlight-bg);
-  transition: background 30s ease-out;
 }
 
 .col-tags {
