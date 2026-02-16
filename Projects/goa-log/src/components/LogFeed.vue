@@ -261,6 +261,12 @@ onMounted(async () => {
   font-size: 30px;
   font-weight: 700;
   letter-spacing: 0;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 20;
+  padding: 8px 0;
+  margin: 0;
 }
 
 .header-links {
