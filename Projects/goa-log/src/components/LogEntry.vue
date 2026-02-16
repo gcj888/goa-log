@@ -646,6 +646,11 @@ const getEmbedHtml = (input) => {
     display: none;
   }
 
+  .col-title {
+    white-space: normal;
+    line-height: 1.3;
+  }
+
   .content-inner {
     padding-left: calc(var(--spacing-unit) * 2);
     padding-right: calc(var(--spacing-unit) * 2);

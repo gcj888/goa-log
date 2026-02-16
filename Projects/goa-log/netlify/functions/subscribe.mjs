@@ -18,8 +18,10 @@ const sanityClient = createClient({
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+const ALLOWED_ORIGIN = 'https://cabbages.info'
+
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -38,7 +40,16 @@ export default async (req) => {
   }
 
   try {
-    const { email } = await req.json()
+    const { email, _hp } = await req.json()
+
+    // Honeypot check — bots fill this hidden field, humans don't
+    if (_hp) {
+      // Silently accept to not tip off bots
+      return new Response(JSON.stringify({ message: 'Subscribed' }), {
+        status: 200,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Validate email
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -77,10 +88,16 @@ export default async (req) => {
 
     // Send welcome email
     try {
+      const unsubToken = Buffer.from(normalizedEmail).toString('base64')
+      const unsubUrl = `https://cabbages.info/.netlify/functions/unsubscribe?token=${unsubToken}`
       await resend.emails.send({
         from: 'cabbages.info <graham@cabbages.info>',
         to: normalizedEmail,
         subject: 'Welcome to cabbages.info',
+        headers: {
+          'List-Unsubscribe': `<${unsubUrl}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
         html: `<!DOCTYPE html>
 <html><head>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -93,6 +110,7 @@ export default async (req) => {
   <p>You'll get occasional emails when new things are posted. Nothing frequent, nothing spammy.</p>
   <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #000000; font-size: 12px;">
     <a href="https://cabbages.info" style="color: #000000;">cabbages.info</a>
+    <div style="margin-top: 8px;"><a href="${unsubUrl}" style="color: #000000; opacity: 0.5;">unsubscribe</a></div>
   </div>
 </div>
 </body></html>`,

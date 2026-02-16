@@ -192,6 +192,7 @@ function generateEmailHtml(entry) {
   ${blocksHtml}
   <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #000000; font-size: 12px;">
     <a href="${SITE_URL}/#${entry._id}" style="color: #000000;">View on cabbages.info</a>
+    <div style="margin-top: 8px;"><a href="${SITE_URL}/.netlify/functions/unsubscribe?token=%%UNSUB_TOKEN%%" style="color: #000000; opacity: 0.5;">unsubscribe</a></div>
   </div>
 </div>
 </body></html>`
@@ -309,12 +310,20 @@ export default async (req) => {
     for (let i = 0; i < subscribers.length; i += batchSize) {
       const batch = subscribers.slice(i, i + batchSize)
       const { error } = await resend.batch.send(
-        batch.map(email => ({
-          from: 'cabbages.info <graham@cabbages.info>',
-          to: email,
-          subject: entry.title,
-          html,
-        }))
+        batch.map(email => {
+          const unsubToken = Buffer.from(email).toString('base64')
+          const unsubUrl = `${SITE_URL}/.netlify/functions/unsubscribe?token=${unsubToken}`
+          return {
+            from: 'cabbages.info <graham@cabbages.info>',
+            to: email,
+            subject: entry.title,
+            html: html.replace('%%UNSUB_TOKEN%%', unsubToken),
+            headers: {
+              'List-Unsubscribe': `<${unsubUrl}>`,
+              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            },
+          }
+        })
       )
 
       if (error) {

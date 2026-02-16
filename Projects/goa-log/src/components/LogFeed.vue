@@ -10,6 +10,7 @@
           <div class="contact-line"><a href="mailto:graham@cabbages.info">graham@cabbages.info</a></div>
           <div class="contact-line"><a href="https://instagram.com/pink__frosty" target="_blank" rel="noopener">@pink__frosty</a><span class="separator">✦</span><a href="https://gatheringofangels.bandcamp.com/" target="_blank" rel="noopener">bandcamp</a></div>
           <form class="subscribe-form" @submit.prevent="handleSubscribe">
+            <input v-model="honeypot" type="text" class="hp-field" tabindex="-1" autocomplete="off" />
             <input
               v-model="subscribeEmail"
               type="email"
@@ -18,7 +19,7 @@
               :disabled="subscribeState === 'sending'"
             />
             <button type="submit" class="subscribe-button" :disabled="subscribeState === 'sending'">
-              {{ subscribeState === 'sending' ? '...' : subscribeState === 'done' ? 'ok!' : 'subscribe' }}
+              {{ subscribeState === 'sending' ? '...' : subscribeState === 'done' ? 'THANK YOU' : 'subscribe' }}
             </button>
             <span v-if="subscribeMessage" class="subscribe-message">{{ subscribeMessage }}</span>
           </form>
@@ -68,6 +69,7 @@ const error = ref(null)
 
 // Subscribe form
 const subscribeEmail = ref('')
+const honeypot = ref('')
 const subscribeState = ref('idle') // idle, sending, done
 const subscribeMessage = ref('')
 
@@ -79,7 +81,7 @@ async function handleSubscribe() {
     const res = await fetch('/.netlify/functions/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: subscribeEmail.value }),
+      body: JSON.stringify({ email: subscribeEmail.value, _hp: honeypot.value }),
     })
     const data = await res.json()
     subscribeState.value = 'done'
@@ -310,6 +312,15 @@ onMounted(async () => {
   font-size: 12px;
   user-select: none;
   margin: 0 3px;
+}
+
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+  height: 0;
+  width: 0;
+  overflow: hidden;
 }
 
 .contact-line {
