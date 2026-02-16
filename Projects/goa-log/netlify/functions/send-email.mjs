@@ -230,22 +230,21 @@ async function getAllSubscribers() {
 
 // --- Main handler ---
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
 export default async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      },
-    })
+    return new Response(null, { status: 200, headers: CORS_HEADERS })
   }
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     })
   }
 
@@ -255,7 +254,7 @@ export default async (req) => {
   if (!secret || authHeader !== `Bearer ${secret}`) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     })
   }
 
@@ -264,7 +263,7 @@ export default async (req) => {
     if (!entryId) {
       return new Response(JSON.stringify({ error: 'Missing entryId' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       })
     }
 
@@ -277,7 +276,7 @@ export default async (req) => {
     if (!entry) {
       return new Response(JSON.stringify({ error: 'Entry not found' }), {
         status: 404,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       })
     }
 
@@ -287,7 +286,7 @@ export default async (req) => {
         error: `Already sent on ${new Date(entry.emailSentAt).toLocaleDateString()}`
       }), {
         status: 409,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       })
     }
 
@@ -296,7 +295,7 @@ export default async (req) => {
     if (subscribers.length === 0) {
       return new Response(JSON.stringify({ error: 'No subscribers found' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       })
     }
 
@@ -344,13 +343,13 @@ export default async (req) => {
       count: totalSent
     }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     })
   } catch (err) {
     console.error('Send email error:', err)
     return new Response(JSON.stringify({ error: 'Something went wrong' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     })
   }
 }
