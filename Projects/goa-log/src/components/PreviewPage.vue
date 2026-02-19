@@ -169,17 +169,33 @@ const wrapBareIframes = (html) => {
   })
 }
 
+const preprocessMarkdown = (text) => {
+  const fixedHeadings = text.replace(/^(#{1,6})([^#\s])/gm, '$1 $2')
+  return fixedHeadings
+    .split(/\n{2,}/)
+    .map(block => {
+      const trimmed = block.trim()
+      if (/^#{1,6} /.test(trimmed)) return block
+      if (/^>/.test(trimmed)) return block
+      if (/^[-*+] |^\d+\. /.test(trimmed)) return block
+      if (/^-{3,}$|^={3,}$/m.test(trimmed)) return block
+      if (/^```/.test(trimmed)) return block
+      return block.replace(/([^\n])\n([^\n])/g, '$1<br>\n$2')
+    })
+    .join('\n\n')
+}
+
 const parseMarkdown = (text) => {
   if (!text) return ''
-  const withEmbeds = convertEmbedUrls(text)
-  const html = marked(withEmbeds, { breaks: true })
+  const withEmbeds = convertEmbedUrls(preprocessMarkdown(text))
+  const html = marked(withEmbeds)
   return fixBareLinks(wrapBareIframes(html))
 }
 
 const parsedLegacyContent = computed(() => {
   if (!entry.value?.content) return ''
-  const withEmbeds = convertEmbedUrls(entry.value.content)
-  const html = marked(withEmbeds, { breaks: true })
+  const withEmbeds = convertEmbedUrls(preprocessMarkdown(entry.value.content))
+  const html = marked(withEmbeds)
   return fixBareLinks(wrapBareIframes(html))
 })
 

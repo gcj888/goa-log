@@ -245,19 +245,39 @@ const wrapBareIframes = (html) => {
   })
 }
 
+// Pre-process markdown:
+// 1. Fix ATX headings missing a space after # (e.g. ###Word → ### Word)
+// 2. Convert single newlines within plain paragraphs to <br> so soft line breaks
+//    work freely, without breaking block-level elements (blockquotes, lists, headings, hr)
+const preprocessMarkdown = (text) => {
+  const fixedHeadings = text.replace(/^(#{1,6})([^#\s])/gm, '$1 $2')
+  return fixedHeadings
+    .split(/\n{2,}/)
+    .map(block => {
+      const trimmed = block.trim()
+      if (/^#{1,6} /.test(trimmed)) return block        // heading
+      if (/^>/.test(trimmed)) return block              // blockquote
+      if (/^[-*+] |^\d+\. /.test(trimmed)) return block // list
+      if (/^-{3,}$|^={3,}$/m.test(trimmed)) return block // hr
+      if (/^```/.test(trimmed)) return block            // code fence
+      return block.replace(/([^\n])\n([^\n])/g, '$1<br>\n$2')
+    })
+    .join('\n\n')
+}
+
 // Parse markdown for text blocks
 const parseMarkdown = (text) => {
   if (!text) return ''
-  const withEmbeds = convertEmbedUrls(text)
-  const html = marked(withEmbeds, { breaks: true })
+  const withEmbeds = convertEmbedUrls(preprocessMarkdown(text))
+  const html = marked(withEmbeds)
   return fixBareLinks(wrapBareIframes(html))
 }
 
 // Legacy: Parse markdown content with inline embeds
 const parsedLegacyContent = computed(() => {
   if (!props.entry.content) return ''
-  const withEmbeds = convertEmbedUrls(props.entry.content)
-  const html = marked(withEmbeds, { breaks: true })
+  const withEmbeds = convertEmbedUrls(preprocessMarkdown(props.entry.content))
+  const html = marked(withEmbeds)
   return fixBareLinks(wrapBareIframes(html))
 })
 
