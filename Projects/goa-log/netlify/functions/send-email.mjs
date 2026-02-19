@@ -91,6 +91,36 @@ function formatBandcampUrl(url) {
   } catch { return url.replace(/https?:\/\//, '') }
 }
 
+// Custom marked renderer for email — uses inline styles since email clients strip <style> tags
+const emailRenderer = new marked.Renderer()
+const SERIF = `'Georgia', 'Times New Roman', serif`
+const MONO = `'IBM Plex Mono', 'Courier New', monospace`
+emailRenderer.heading = ({ text, depth }) => {
+  const sizes = { 1: '30px', 2: '22px', 3: '17px', 4: '15px' }
+  const size = sizes[depth] || '15px'
+  return `<div style="font-family: ${SERIF}; font-size: ${size}; font-weight: 700; text-transform: lowercase; margin: 1em 0 0.25em 0; line-height: 1.2;">${text}</div>`
+}
+emailRenderer.blockquote = ({ text }) => {
+  return `<div style="margin: 0.75em 0 0.75em 1.5em; padding-left: 1em; border-left: 2px solid #000000; opacity: 0.7; font-family: ${MONO};">${text}</div>`
+}
+
+// Same soft-break preprocessor as the frontend
+function preprocessMarkdown(text) {
+  return text
+    .split(/\n{2,}/)
+    .map(block => {
+      const trimmed = block.trim()
+      if (/^#{1,6} /.test(trimmed)) return block
+      if (/^#{1,6}[^#\s]/.test(trimmed)) return block.replace(/^(#{1,6})([^#\s])/gm, '$1 $2')
+      if (/^>/.test(trimmed)) return block
+      if (/^[-*+] |^\d+\. /.test(trimmed)) return block
+      if (/^-{3,}$|^={3,}$/m.test(trimmed)) return block
+      if (/^```/.test(trimmed)) return block
+      return block.replace(/([^\n])\n([^\n])/g, '$1<br>\n$2')
+    })
+    .join('\n\n')
+}
+
 function renderTextBlock(text) {
   if (!text) return ''
   const withLinks = text.replace(
@@ -103,7 +133,7 @@ function renderTextBlock(text) {
       return `[${url}](${url})`
     }
   )
-  return `<div style="line-height: 1.6; margin-bottom: 16px;">${marked(withLinks, { breaks: true })}</div>`
+  return `<div style="line-height: 1.6; margin-bottom: 16px;">${marked(preprocessMarkdown(withLinks), { renderer: emailRenderer })}</div>`
 }
 
 function renderEmbedBlock(url, glowColor) {
@@ -186,7 +216,7 @@ function generateEmailHtml(entry) {
 <div style="max-width: 640px; margin: 0 auto; padding: 32px 16px;">
   <div style="margin-bottom: 24px; border-bottom: 1px solid #000000; padding-bottom: 16px;">
     <div style="font-size: 12px; opacity: 0.6; margin-bottom: 4px;">${formattedDate}</div>
-    <div style="font-size: 15px; font-weight: 400;${isRelease ? ' background: #FFEB3B; display: inline-block; padding: 0 4px;' : ''}">${escapeHtml(entry.title)}</div>
+    <div style="font-family: 'Georgia', 'Times New Roman', serif; font-size: 30px; font-weight: 700; text-transform: lowercase; line-height: 1.2;${isRelease ? ' background: #FFEB3B; display: inline-block; padding: 0 4px;' : ''}">${escapeHtml(entry.title)}</div>
     ${tagsHtml}
   </div>
   ${blocksHtml}
