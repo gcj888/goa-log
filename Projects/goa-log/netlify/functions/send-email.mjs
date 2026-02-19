@@ -259,7 +259,7 @@ export default async (req) => {
   }
 
   try {
-    const { entryId } = await req.json()
+    const { entryId, testEmail } = await req.json()
     if (!entryId) {
       return new Response(JSON.stringify({ error: 'Missing entryId' }), {
         status: 400,
@@ -280,7 +280,31 @@ export default async (req) => {
       })
     }
 
-    // Check if already sent
+    // Render email HTML
+    const html = generateEmailHtml(entry)
+
+    // Test email — send only to the specified address, don't mark as sent
+    if (testEmail) {
+      const unsubToken = Buffer.from(testEmail).toString('base64')
+      const { error } = await resend.emails.send({
+        from: 'cabbages.info <graham@cabbages.info>',
+        to: testEmail,
+        subject: `[TEST] ${entry.title}`,
+        html: html.replace('%%UNSUB_TOKEN%%', unsubToken),
+      })
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 500,
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        })
+      }
+      return new Response(JSON.stringify({ message: `Test email sent to ${testEmail}` }), {
+        status: 200,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Check if already sent (only for real sends)
     if (entry.emailSentAt) {
       return new Response(JSON.stringify({
         error: `Already sent on ${new Date(entry.emailSentAt).toLocaleDateString()}`
@@ -298,9 +322,6 @@ export default async (req) => {
         headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       })
     }
-
-    // Render email HTML
-    const html = generateEmailHtml(entry)
 
     // Send via Resend (batch — up to 100 per call)
     const batchSize = 50
