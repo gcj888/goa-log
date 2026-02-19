@@ -263,6 +263,7 @@ const getEmbedHtml = (input) => {
   font-family: 'p22-morris-troy', sans-serif;
   font-size: 30px;
   font-weight: 700;
+  text-transform: lowercase;
   margin: calc(var(--spacing-unit)) 0;
 }
 
@@ -360,7 +361,7 @@ const getEmbedHtml = (input) => {
 .entry-text :deep(em) { font-style: italic; }
 .entry-text :deep(blockquote) { margin: 0.75em 0 0.75em 1.5em; padding-left: 1em; border-left: 2px solid currentColor; opacity: 0.7; }
 .entry-text :deep(blockquote p) { margin: 0; }
-.entry-text :deep(h1), .entry-text :deep(h2), .entry-text :deep(h3), .entry-text :deep(h4) { margin: 1em 0 0.25em 0; font-family: 'p22-morris-troy', sans-serif; font-weight: 700; }
+.entry-text :deep(h1), .entry-text :deep(h2), .entry-text :deep(h3), .entry-text :deep(h4) { margin: 1em 0 0.25em 0; font-family: 'p22-morris-troy', sans-serif; font-weight: 700; text-transform: lowercase; }
 .entry-text :deep(h1) { font-size: 30px; }
 .entry-text :deep(h2) { font-size: 22px; }
 .entry-text :deep(h3) { font-size: 17px; }

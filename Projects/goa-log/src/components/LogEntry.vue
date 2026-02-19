@@ -602,6 +602,7 @@ const getEmbedHtml = (input) => {
   margin: 1em 0 0.25em 0;
   font-family: 'p22-morris-troy', sans-serif;
   font-weight: 700;
+  text-transform: lowercase;
 }
 
 .entry-text :deep(h1) { font-size: 30px; }
