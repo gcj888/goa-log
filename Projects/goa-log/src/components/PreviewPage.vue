@@ -360,7 +360,7 @@ const getEmbedHtml = (input) => {
 .entry-text :deep(em) { font-style: italic; }
 .entry-text :deep(blockquote) { margin: 0.75em 0 0.75em 1.5em; padding-left: 1em; border-left: 2px solid currentColor; opacity: 0.7; }
 .entry-text :deep(blockquote p) { margin: 0; }
-.entry-text :deep(h1), .entry-text :deep(h2), .entry-text :deep(h3), .entry-text :deep(h4) { margin: 1em 0 0.25em 0; font-weight: 700; }
+.entry-text :deep(h1), .entry-text :deep(h2), .entry-text :deep(h3), .entry-text :deep(h4) { margin: 1em 0 0.25em 0; font-family: 'p22-morris-troy', sans-serif; font-weight: 700; }
 .entry-text :deep(.inline-embed) { margin: 1em 0; display: flex; justify-content: center; }
 .entry-text :deep(.inline-embed iframe) { border: none; max-width: 100%; box-shadow: 0 0 20px 4px var(--glow-color); }
 .entry-text :deep(.youtube-wrapper) { position: relative; width: 100%; max-width: 640px; aspect-ratio: 16 / 9; }
