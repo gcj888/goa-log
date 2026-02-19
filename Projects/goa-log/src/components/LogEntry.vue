@@ -604,6 +604,11 @@ const getEmbedHtml = (input) => {
   font-weight: 700;
 }
 
+.entry-text :deep(h1) { font-size: 30px; }
+.entry-text :deep(h2) { font-size: 22px; }
+.entry-text :deep(h3) { font-size: 17px; }
+.entry-text :deep(h4) { font-size: 15px; }
+
 .entry-text :deep(.inline-embed) {
   margin: 1em 0;
   display: flex;
