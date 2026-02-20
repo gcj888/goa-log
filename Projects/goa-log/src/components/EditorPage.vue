@@ -76,10 +76,6 @@
             <input type="checkbox" v-model="form.pinned" />
             pinned
           </label>
-          <label class="field-label" style="margin-left: 24px;">
-            <input type="checkbox" v-model="form.publishToEmail" />
-            publish to email
-          </label>
         </div>
 
         <div class="field-row" v-if="!form.pinned">
@@ -317,7 +313,6 @@ function emptyForm() {
     date: new Date().toISOString().split('T')[0],
     title: '',
     tags: '',
-    publishToEmail: false,
     blocks: [],
   }
 }
@@ -336,7 +331,6 @@ function openEdit(entry) {
     date: entry.date ?? new Date().toISOString().split('T')[0],
     title: entry.title ?? '',
     tags: (entry.tags ?? []).join(', '),
-    publishToEmail: entry.publishToEmail ?? false,
     blocks: (entry.blocks ?? []).map(b => ({ ...b })),
   }
   formError.value = ''
@@ -429,7 +423,6 @@ async function saveEntry() {
     date: form.value.pinned ? null : form.value.date,
     title: form.value.title.trim(),
     tags: form.value.tags.split(',').map(t => t.trim()).filter(Boolean),
-    publishToEmail: form.value.publishToEmail,
     blocks: form.value.blocks,
   }
 
