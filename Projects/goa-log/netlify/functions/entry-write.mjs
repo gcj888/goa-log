@@ -164,9 +164,55 @@ export default async (req) => {
     }
 
     // ── DELETE: delete entry ─────────────────────────────────────────────────
-    if (req.method === 'DELETE') {
+    if (req.method === 'DELETE' && !url.searchParams.get('subs')) {
       if (!id) return json({ error: 'Missing id' }, 400)
       await sanityClient.delete(id)
+      return json({ ok: true })
+    }
+
+    // ── GET ?subs=1: list all active subscribers ──────────────────────────────
+    if (req.method === 'GET' && url.searchParams.get('subs')) {
+      const subscribers = await sanityClient.fetch(
+        `*[_type == "subscriber"] | order(subscribedAt desc) { _id, email, status, subscribedAt }`
+      )
+      return json(subscribers)
+    }
+
+    // ── POST ?subs=1: add subscriber ──────────────────────────────────────────
+    if (req.method === 'POST' && url.searchParams.get('subs')) {
+      const { email } = await req.json()
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return json({ error: 'Invalid email address' }, 400)
+      }
+      const normalizedEmail = email.toLowerCase().trim()
+      const existing = await sanityClient.fetch(
+        `*[_type == "subscriber" && email == $email][0]`,
+        { email: normalizedEmail }
+      )
+      if (existing) {
+        if (existing.status === 'active') return json({ message: 'Already subscribed' })
+        await sanityClient.patch(existing._id).set({ status: 'active' }).commit()
+        return json({ message: 'Reactivated' })
+      }
+      await sanityClient.create({
+        _type: 'subscriber',
+        email: normalizedEmail,
+        subscribedAt: new Date().toISOString(),
+        status: 'active',
+      })
+      return json({ message: 'Added' }, 201)
+    }
+
+    // ── DELETE ?subs=1&email=xxx: remove subscriber ───────────────────────────
+    if (req.method === 'DELETE' && url.searchParams.get('subs')) {
+      const email = url.searchParams.get('email')
+      if (!email) return json({ error: 'Missing email' }, 400)
+      const subscriber = await sanityClient.fetch(
+        `*[_type == "subscriber" && email == $email][0]`,
+        { email: email.toLowerCase().trim() }
+      )
+      if (!subscriber) return json({ error: 'Not found' }, 404)
+      await sanityClient.patch(subscriber._id).set({ status: 'inactive', unsubscribedAt: new Date().toISOString() }).commit()
       return json({ ok: true })
     }
 
