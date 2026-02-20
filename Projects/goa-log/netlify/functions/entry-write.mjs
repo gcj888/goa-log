@@ -79,7 +79,6 @@ function buildDocument(body) {
     ...(body.pinned ? {} : { date: body.date }),
     title: body.title,
     tags: body.tags ?? [],
-    publishToEmail: body.publishToEmail ?? false,
     blocks: buildBlocks(body.blocks),
   }
 }
@@ -106,7 +105,7 @@ export default async (req) => {
     if (req.method === 'GET') {
       const entries = await sanityClient.fetch(
         `*[_type == "logEntry"] | order(coalesce(pinned, false) desc, date desc, _createdAt desc) {
-          _id, pinned, date, title, tags, publishToEmail, emailSentAt,
+          _id, pinned, date, title, tags, emailSentAt,
           blocks[] {
             _type, _key, text, url, size,
             "imageUrl": image.asset->url, "imageRef": image.asset._ref,
@@ -157,7 +156,6 @@ export default async (req) => {
         pinned: body.pinned ?? false,
         title: body.title,
         tags: body.tags ?? [],
-        publishToEmail: body.publishToEmail ?? false,
         blocks: buildBlocks(body.blocks),
       }
       if (!body.pinned) patch.date = body.date

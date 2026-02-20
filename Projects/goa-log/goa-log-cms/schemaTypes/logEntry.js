@@ -41,13 +41,6 @@ export default {
       description: 'Add tags like: release, sketch, idea, music, etc.'
     },
     {
-      name: 'publishToEmail',
-      title: 'Publish to Email',
-      type: 'boolean',
-      description: 'Include this entry in the RSS feed. Use Send Email button to send directly.',
-      initialValue: false
-    },
-    {
       name: 'emailSentAt',
       title: 'Email Sent At',
       type: 'datetime',
