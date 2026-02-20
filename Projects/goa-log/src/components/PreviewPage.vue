@@ -61,7 +61,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { marked } from 'marked'
-import { getLatestEntry } from '../../sanity/client'
+import { getLatestEntry, getEntryById } from '../../sanity/client'
 
 // Fix links missing protocol — e.g. href="youtube.com" → href="https://youtube.com"
 const fixBareLinks = (html) => {
@@ -74,7 +74,9 @@ const error = ref(null)
 
 onMounted(async () => {
   try {
-    entry.value = await getLatestEntry()
+    const params = new URLSearchParams(window.location.search)
+    const id = params.get('id')
+    entry.value = id ? await getEntryById(id) : await getLatestEntry()
     if (!entry.value) {
       error.value = 'No entries found'
     }

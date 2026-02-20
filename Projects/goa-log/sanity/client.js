@@ -42,3 +42,10 @@ export const getLatestEntry = async () => {
   )
 }
 
+export const getEntryById = async (id) => {
+  return await sanityClient.fetch(
+    `*[_type == "logEntry" && _id == $id][0] {${entryFields}}`,
+    { id }
+  )
+}
+

@@ -63,9 +63,23 @@
       <div class="form-header">
         <button class="back-link" @click="view = 'list'">← list</button>
         <span class="form-title">{{ editingId ? 'edit entry' : 'new entry' }}</span>
-        <button class="btn-primary" @click="saveEntry" :disabled="saving">
-          {{ saving ? 'saving...' : 'save' }}
-        </button>
+        <div class="form-header-actions">
+          <a
+            v-if="editingId"
+            :href="`/?id=${editingId}#preview`"
+            target="_blank"
+            class="btn-secondary"
+          >preview</a>
+          <button
+            v-if="editingId"
+            class="btn-secondary"
+            @click="sendTestEmail"
+            :disabled="testEmailSending"
+          >{{ testEmailSending ? 'sending...' : 'test email' }}</button>
+          <button class="btn-primary" @click="saveEntry" :disabled="saving">
+            {{ saving ? 'saving...' : 'save' }}
+          </button>
+        </div>
       </div>
 
       <div class="form-body">
@@ -303,9 +317,10 @@ function formatDate(entry) {
 
 const editingId = ref(null)
 const form      = ref(emptyForm())
-const saving    = ref(false)
-const formError = ref('')
-const uploading = reactive({}) // keyed by block._key
+const saving           = ref(false)
+const formError        = ref('')
+const uploading        = reactive({}) // keyed by block._key
+const testEmailSending = ref(false)
 
 function emptyForm() {
   return {
@@ -443,6 +458,32 @@ async function saveEntry() {
     formError.value = e.message
   } finally {
     saving.value = false
+  }
+}
+
+async function sendTestEmail() {
+  if (!editingId.value) return
+  testEmailSending.value = true
+  formError.value = ''
+  try {
+    const res = await fetch('/.netlify/functions/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token.value}`,
+      },
+      body: JSON.stringify({ entryId: editingId.value, testEmail: 'gclarkjones@gmail.com' }),
+    })
+    const data = await res.json()
+    if (res.ok) {
+      alert(data.message || 'Test email sent!')
+    } else {
+      formError.value = `Email failed: ${data.error}`
+    }
+  } catch (e) {
+    formError.value = `Email failed: ${e.message}`
+  } finally {
+    testEmailSending.value = false
   }
 }
 
@@ -778,6 +819,35 @@ async function deleteEntry(id) {
 }
 
 /* ── Buttons ────────────────────────────────────────────────────────────────── */
+
+.form-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-unit);
+  flex-wrap: wrap;
+}
+
+.btn-secondary {
+  padding: 5px 14px;
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 .btn-primary {
   padding: 5px 14px;
