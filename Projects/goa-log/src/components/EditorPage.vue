@@ -22,7 +22,10 @@
     <div v-else-if="view === 'list'" class="editor-list">
       <div class="list-toolbar">
         <a href="#" class="back-link">← back to feed</a>
-        <button class="btn-primary" @click="openNew">+ new entry</button>
+        <div class="list-toolbar-actions">
+          <button class="btn-secondary" @click="openSubscribers">subscribers</button>
+          <button class="btn-primary" @click="openNew">+ new entry</button>
+        </div>
       </div>
 
       <div v-if="listLoading" class="status-msg">loading...</div>
@@ -76,6 +79,12 @@
             @click="sendTestEmail"
             :disabled="testEmailSending"
           >{{ testEmailSending ? 'sending...' : 'test email' }}</button>
+          <button
+            v-if="editingId"
+            class="btn-secondary btn-send-email"
+            @click="sendEmailToAll"
+            :disabled="sendingToAll"
+          >{{ sendingToAll ? 'sending...' : 'send email' }}</button>
           <button class="btn-primary" @click="saveEntry" :disabled="saving">
             {{ saving ? 'saving...' : 'save' }}
           </button>
@@ -231,6 +240,69 @@
       </div>
     </div>
 
+    <!-- ── SUBSCRIBERS ───────────────────────────────────────────────────────── -->
+    <div v-else-if="view === 'subscribers'" class="editor-subs">
+      <div class="list-toolbar">
+        <button class="back-link" @click="view = 'list'">← entries</button>
+        <span class="form-title">subscribers</span>
+      </div>
+
+      <div v-if="subsLoading" class="status-msg">loading...</div>
+      <div v-else-if="subsError" class="error-msg">{{ subsError }}</div>
+
+      <div v-else>
+        <div class="subs-count">
+          {{ subscribers.filter(s => s.status === 'active').length }} active
+          <span style="opacity:0.4"> / {{ subscribers.length }} total</span>
+        </div>
+
+        <!-- Add subscriber form -->
+        <div class="subs-add-row">
+          <input
+            type="email"
+            v-model="newSubEmail"
+            class="field-input"
+            placeholder="add email address"
+            @keydown.enter="addSubscriber"
+          />
+          <button class="btn-primary" @click="addSubscriber" :disabled="subAdding">
+            {{ subAdding ? 'adding...' : 'add' }}
+          </button>
+        </div>
+        <div v-if="subAddError" class="error-msg">{{ subAddError }}</div>
+        <div v-if="subAddSuccess" class="success-msg">{{ subAddSuccess }}</div>
+
+        <!-- Subscriber list -->
+        <div class="subs-list">
+          <div class="subs-header">
+            <div class="sub-col-email">email</div>
+            <div class="sub-col-status">status</div>
+            <div class="sub-col-date">subscribed</div>
+            <div class="sub-col-actions"></div>
+          </div>
+          <div
+            v-for="sub in subscribers"
+            :key="sub._id"
+            class="sub-row"
+            :class="{ 'is-inactive': sub.status !== 'active' }"
+          >
+            <div class="sub-col-email">{{ sub.email }}</div>
+            <div class="sub-col-status">{{ sub.status }}</div>
+            <div class="sub-col-date">{{ formatSubDate(sub.subscribedAt) }}</div>
+            <div class="sub-col-actions">
+              <button
+                v-if="sub.status === 'active'"
+                class="delete-btn"
+                @click="removeSubscriber(sub.email)"
+                title="unsubscribe"
+              >×</button>
+            </div>
+          </div>
+          <div v-if="subscribers.length === 0" class="status-msg">no subscribers yet</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -321,6 +393,7 @@ const saving           = ref(false)
 const formError        = ref('')
 const uploading        = reactive({}) // keyed by block._key
 const testEmailSending = ref(false)
+const sendingToAll     = ref(false)
 
 function emptyForm() {
   return {
@@ -484,6 +557,93 @@ async function sendTestEmail() {
     formError.value = `Email failed: ${e.message}`
   } finally {
     testEmailSending.value = false
+  }
+}
+
+async function sendEmailToAll() {
+  if (!editingId.value) return
+  if (!confirm('Send this entry to all subscribers? This cannot be undone.')) return
+  sendingToAll.value = true
+  formError.value = ''
+  try {
+    const res = await fetch('/.netlify/functions/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token.value}`,
+      },
+      body: JSON.stringify({ entryId: editingId.value }),
+    })
+    const data = await res.json()
+    if (res.ok) {
+      alert(data.message || 'Email sent!')
+    } else {
+      formError.value = `Send failed: ${data.error}`
+    }
+  } catch (e) {
+    formError.value = `Send failed: ${e.message}`
+  } finally {
+    sendingToAll.value = false
+  }
+}
+
+// ── Subscribers ───────────────────────────────────────────────────────────────
+
+const subscribers  = ref([])
+const subsLoading  = ref(false)
+const subsError    = ref('')
+const newSubEmail  = ref('')
+const subAdding    = ref(false)
+const subAddError  = ref('')
+const subAddSuccess = ref('')
+
+async function openSubscribers() {
+  view.value = 'subscribers'
+  subsLoading.value = true
+  subsError.value   = ''
+  try {
+    subscribers.value = await apiFetch('?subs=1')
+  } catch (e) {
+    subsError.value = e.message
+  } finally {
+    subsLoading.value = false
+  }
+}
+
+function formatSubDate(dt) {
+  if (!dt) return '—'
+  const d = new Date(dt)
+  return `${d.getMonth() + 1}.${d.getDate()}.${String(d.getFullYear()).slice(-2)}`
+}
+
+async function addSubscriber() {
+  const email = newSubEmail.value.trim()
+  if (!email) return
+  subAdding.value    = true
+  subAddError.value  = ''
+  subAddSuccess.value = ''
+  try {
+    const data = await apiFetch('?subs=1', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    })
+    subAddSuccess.value = data.message || 'Added'
+    newSubEmail.value   = ''
+    subscribers.value   = await apiFetch('?subs=1')
+  } catch (e) {
+    subAddError.value = e.message
+  } finally {
+    subAdding.value = false
+  }
+}
+
+async function removeSubscriber(email) {
+  if (!confirm(`Unsubscribe ${email}?`)) return
+  try {
+    await apiFetch(`?subs=1&email=${encodeURIComponent(email)}`, { method: 'DELETE' })
+    subscribers.value = await apiFetch('?subs=1')
+  } catch (e) {
+    subsError.value = e.message
   }
 }
 
@@ -936,6 +1096,94 @@ async function deleteEntry(id) {
   padding-top: calc(var(--spacing-unit) * 3);
   border-top: 1px solid var(--border);
   padding-bottom: calc(var(--spacing-unit) * 4);
+}
+
+.list-toolbar-actions {
+  display: flex;
+  gap: var(--spacing-unit);
+  align-items: center;
+}
+
+.btn-send-email {
+  border-color: var(--border);
+}
+
+.btn-send-email:hover {
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* ── Subscribers ─────────────────────────────────────────────────────────────── */
+
+.subs-count {
+  font-size: 13px;
+  padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: calc(var(--spacing-unit) * 2);
+}
+
+.subs-add-row {
+  display: flex;
+  gap: var(--spacing-unit);
+  margin-bottom: var(--spacing-unit);
+  max-width: 500px;
+}
+
+.subs-add-row .field-input {
+  flex: 1;
+}
+
+.subs-list {
+  margin-top: calc(var(--spacing-unit) * 2);
+}
+
+.subs-header,
+.sub-row {
+  display: grid;
+  grid-template-columns: 1fr 100px 80px 32px;
+  gap: calc(var(--spacing-unit) * 2);
+  padding: calc(var(--spacing-unit) * 1.25) calc(var(--spacing-unit) * 2);
+  align-items: center;
+}
+
+.subs-header {
+  font-size: 12px;
+  opacity: 0.45;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sub-row {
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.sub-row.is-inactive {
+  opacity: 0.4;
+}
+
+.sub-col-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.sub-col-status,
+.sub-col-date {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.sub-col-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.success-msg {
+  color: #007700;
+  font-size: 13px;
+  padding: var(--spacing-unit) 0;
 }
 
 /* ── Mobile ─────────────────────────────────────────────────────────────────── */
