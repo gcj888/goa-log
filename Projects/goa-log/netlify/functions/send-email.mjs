@@ -91,16 +91,14 @@ function formatBandcampUrl(url) {
   } catch { return url.replace(/https?:\/\//, '') }
 }
 
-// Maps ASCII letters to Unicode Mathematical Script equivalents
-const SCRIPT_UPPER = [...'𝒜ℬ𝒞𝒟ℰℱ𝒢ℋℐ𝒥𝒦ℒℳ𝒩𝒪𝒫𝒬ℛ𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵']
-const SCRIPT_LOWER = [...'𝒶𝒷𝒸𝒹ℯ𝒻ℊ𝒽𝒾𝒿𝓀𝓁𝓂𝓃ℴ𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏']
-
+// Maps ASCII letters to Unicode Mathematical Bold Script (U+1D4D0/U+1D4EA)
+// Using Bold Script instead of regular Script because it's fully contiguous — no gaps
+// filled by inconsistently-rendering Letterlike Symbols chars
 function toScript(text) {
   return [...text].map(ch => {
-    const upper = ch.charCodeAt(0) - 65
-    if (upper >= 0 && upper < 26) return SCRIPT_UPPER[upper] ?? ch
-    const lower = ch.charCodeAt(0) - 97
-    if (lower >= 0 && lower < 26) return SCRIPT_LOWER[lower] ?? ch
+    const code = ch.charCodeAt(0)
+    if (code >= 65 && code <= 90) return String.fromCodePoint(0x1D4D0 + (code - 65))
+    if (code >= 97 && code <= 122) return String.fromCodePoint(0x1D4EA + (code - 97))
     return ch
   }).join('')
 }
