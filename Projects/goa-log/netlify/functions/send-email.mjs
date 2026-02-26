@@ -149,13 +149,22 @@ function renderTextBlock(text) {
   return `<div style="line-height: 1.6; margin-bottom: 16px;">${marked(preprocessMarkdown(withLinks), { renderer: emailRenderer })}</div>`
 }
 
-function renderEmbedBlock(url, glowColor) {
+async function getBestYouTubeThumbnail(videoId) {
+  const maxRes = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+  try {
+    const res = await fetch(maxRes, { method: 'HEAD' })
+    if (res.ok) return maxRes
+  } catch {}
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+}
+
+async function renderEmbedBlock(url, glowColor) {
   const cleanUrl = cleanEmbedInput(url)
   if (cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')) {
     const videoId = extractYouTubeId(cleanUrl)
     if (videoId) {
       const watchUrl = `https://www.youtube.com/watch?v=${videoId}`
-      const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+      const thumbUrl = await getBestYouTubeThumbnail(videoId)
       return `<div style="text-align: center; margin: 16px 0;">
         <a href="${watchUrl}" style="display: inline-block; text-decoration: none; box-shadow: 0 0 20px 4px ${glowColor};">
           <img src="${thumbUrl}" alt="YouTube video" style="display: block; max-width: 480px; width: 100%; height: auto;" />
@@ -188,7 +197,7 @@ function renderAudioBlock(audioUrl) {
   return `<div style="text-align: center; margin: 16px 0;"><a href="${audioUrl}" style="display: inline-block; padding: 12px 20px; border: 1px solid #000000; text-decoration: none; color: #000000; font-family: 'IBM Plex Mono', 'Courier New', monospace; font-size: 13px;">&#9654; Listen / Download Audio</a></div>`
 }
 
-function generateEmailHtml(entry) {
+async function generateEmailHtml(entry) {
   const glowColor = glowColorForEntry(entry._id)
   const d = new Date(entry.date)
   const formattedDate = `${d.getMonth() + 1}.${d.getDate()}.${String(d.getFullYear()).slice(-2)}`
@@ -196,7 +205,7 @@ function generateEmailHtml(entry) {
 
   let blocksHtml = ''
   if (entry.blocks && entry.blocks.length > 0) {
-    blocksHtml = entry.blocks.map(block => {
+    const rendered = await Promise.all(entry.blocks.map(block => {
       switch (block._type) {
         case 'textBlock': return renderTextBlock(block.text)
         case 'embedBlock': return renderEmbedBlock(block.url, glowColor)
@@ -204,11 +213,12 @@ function generateEmailHtml(entry) {
         case 'audioBlock': return renderAudioBlock(block.audioUrl)
         default: return ''
       }
-    }).filter(Boolean).join('\n')
+    }))
+    blocksHtml = rendered.filter(Boolean).join('\n')
   } else {
     const parts = []
     if (entry.imageUrl) parts.push(renderImageBlock(entry.imageUrl, 'full'))
-    if (entry.embedUrl) parts.push(renderEmbedBlock(entry.embedUrl, glowColor))
+    if (entry.embedUrl) parts.push(await renderEmbedBlock(entry.embedUrl, glowColor))
     if (entry.content) parts.push(renderTextBlock(entry.content))
     if (entry.audioUrl) parts.push(renderAudioBlock(entry.audioUrl))
     blocksHtml = parts.join('\n')
@@ -323,7 +333,7 @@ export default async (req) => {
     }
 
     // Render email HTML
-    const html = generateEmailHtml(entry)
+    const html = await generateEmailHtml(entry)
 
     // Test email — send only to the specified address, don't mark as sent
     if (testEmail) {
