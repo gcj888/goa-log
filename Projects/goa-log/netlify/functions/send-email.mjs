@@ -91,14 +91,27 @@ function formatBandcampUrl(url) {
   } catch { return url.replace(/https?:\/\//, '') }
 }
 
+// Maps ASCII letters to Unicode Mathematical Script equivalents
+const SCRIPT_UPPER = [...'𝒜ℬ𝒞𝒟ℰℱ𝒢ℋℐ𝒥𝒦ℒℳ𝒩𝒪𝒫𝒬ℛ𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵']
+const SCRIPT_LOWER = [...'𝒶𝒷𝒸𝒹ℯ𝒻ℊ𝒽𝒾𝒿𝓀𝓁𝓂𝓃ℴ𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏']
+
+function toScript(text) {
+  return [...text].map(ch => {
+    const upper = ch.charCodeAt(0) - 65
+    if (upper >= 0 && upper < 26) return SCRIPT_UPPER[upper] ?? ch
+    const lower = ch.charCodeAt(0) - 97
+    if (lower >= 0 && lower < 26) return SCRIPT_LOWER[lower] ?? ch
+    return ch
+  }).join('')
+}
+
 // Custom marked renderer for email — uses inline styles since email clients strip <style> tags
 const emailRenderer = new marked.Renderer()
-const SERIF = `'Georgia', 'Times New Roman', serif`
 const MONO = `'IBM Plex Mono', 'Courier New', monospace`
 emailRenderer.heading = ({ text, depth }) => {
   const sizes = { 1: '30px', 2: '22px', 3: '17px', 4: '15px' }
   const size = sizes[depth] || '15px'
-  return `<div style="font-family: ${SERIF}; font-size: ${size}; font-weight: 700; text-transform: lowercase; margin: 1em 0 0.25em 0; line-height: 1.2;">${text}</div>`
+  return `<div style="font-family: ${MONO}; font-size: ${size}; font-weight: 700; margin: 1em 0 0.25em 0; line-height: 1.2;">${toScript(text)}</div>`
 }
 emailRenderer.blockquote = ({ text }) => {
   return `<div style="margin: 0.75em 0 0.75em 1.5em; padding-left: 1em; border-left: 2px solid #000000; opacity: 0.7; font-family: ${MONO};">${text}</div>`
@@ -147,7 +160,7 @@ function renderEmbedBlock(url, glowColor) {
         <a href="${watchUrl}" style="display: inline-block; text-decoration: none; box-shadow: 0 0 20px 4px ${glowColor};">
           <img src="${thumbUrl}" alt="YouTube video" style="display: block; max-width: 480px; width: 100%; height: auto;" />
         </a>
-        <div style="margin-top: 8px;"><a href="${watchUrl}" style="color: #000000; font-size: 13px; font-family: 'IBM Plex Mono', 'Courier New', monospace;">&#9654; Watch on YouTube</a></div>
+        <div style="margin-top: 8px;"><a href="${watchUrl}" style="color: #000000; font-size: 13px; font-family: 'IBM Plex Mono', 'Courier New', monospace;">Watch on YouTube</a></div>
       </div>`
     }
   }
@@ -210,13 +223,12 @@ function generateEmailHtml(entry) {
   return `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body style="margin: 0; padding: 0; background: #ffffff; color: #000000; font-family: 'IBM Plex Mono', 'Courier New', monospace; font-size: 14px; line-height: 1.5;">
 <div style="max-width: 640px; margin: 0 auto; padding: 32px 16px;">
   <div style="margin-bottom: 24px; border-bottom: 1px solid #000000; padding-bottom: 16px;">
     <div style="font-size: 12px; opacity: 0.6; margin-bottom: 4px;">${formattedDate}</div>
-    <div style="font-family: 'Georgia', 'Times New Roman', serif; font-size: 30px; font-weight: 700; text-transform: lowercase; line-height: 1.2;${isRelease ? ' background: #FFEB3B; display: inline-block; padding: 0 4px;' : ''}">${escapeHtml(entry.title)}</div>
+    <div style="font-family: ${MONO}; font-size: 30px; font-weight: 700; line-height: 1.2;${isRelease ? ' background: #FFEB3B; display: inline-block; padding: 0 4px;' : ''}">${toScript(escapeHtml(entry.title))}</div>
     ${tagsHtml}
   </div>
   ${blocksHtml}
